@@ -1,10 +1,7 @@
 package model
 
-// import (
-// 	"gopkg.in/yaml.v3"
-// )
-
 type Entity struct {
+	ID         int64    `yaml:"-"`
 	APIVersion string   `yaml:"apiVersion"`
 	Kind       string   `yaml:"kind"`
 	Metadata   Metadata `yaml:"metadata"`

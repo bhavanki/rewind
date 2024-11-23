@@ -1,6 +1,9 @@
 package model
 
 import (
+	"database/sql"
+	"database/sql/driver"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -47,4 +50,87 @@ func MakeEntityRef(s string) (EntityRef, error) {
 		return e, fmt.Errorf("name empty in %s", s)
 	}
 	return e, nil
+}
+
+func (e EntityRef) Empty() bool {
+	return e.Kind == "" && e.Namespace == "" && e.Name == ""
+}
+
+func (e *EntityRef) Scan(src any) error {
+	if src == nil {
+		return nil
+	}
+	s, ok := src.(string)
+	if !ok {
+		return errors.New("found non-string value for entity ref")
+	}
+
+	entityRef, err := MakeEntityRef(s)
+	if err != nil {
+		return fmt.Errorf("failed to make entity ref from %s: %w", s, err)
+	}
+	e.Kind = entityRef.Kind
+	e.Namespace = entityRef.Namespace
+	e.Name = entityRef.Name
+	return nil
+}
+
+func (e EntityRef) Value() (driver.Value, error) {
+	if e.Empty() {
+		return nil, nil
+	}
+	return e.String(), nil
+}
+
+var _ sql.Scanner = &EntityRef{}
+var _ driver.Valuer = EntityRef{}
+
+type EntityRefs struct {
+	items []EntityRef
+}
+
+func MakeEntityRefs(items []EntityRef) EntityRefs {
+	return EntityRefs{
+		items: items,
+	}
+}
+
+func (es EntityRefs) Items() []EntityRef {
+	return es.items
+}
+
+func (es *EntityRefs) Scan(src any) error {
+	if src == nil {
+		return nil
+	}
+	ss, ok := src.(string)
+	if !ok {
+		return errors.New("found non-string value for entity ref slice")
+	}
+
+	srcStrings := strings.Split(ss, " ")
+	scanned := make([]EntityRef, len(srcStrings))
+	for i, s := range srcStrings {
+		e := EntityRef{}
+		if err := e.Scan(s); err != nil {
+			return err
+		}
+		scanned[i] = e
+	}
+
+	es.items = scanned
+	return nil
+}
+
+func (e EntityRefs) Value() (driver.Value, error) {
+	if len(e.items) == 0 {
+		return nil, nil
+	}
+	valStrings := make([]string, 0, len(e.items))
+	for _, e := range e.items {
+		if !e.Empty() {
+			valStrings = append(valStrings, e.String())
+		}
+	}
+	return strings.Join(valStrings, " "), nil
 }

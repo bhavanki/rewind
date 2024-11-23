@@ -3,7 +3,6 @@ package store
 import (
 	"testing"
 
-	"github.com/bhavanki/rewind/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,44 +13,115 @@ func testStore(t *testing.T) *sqliteStore {
 	return store
 }
 
-func TestCreateEntityAndReadEntity(t *testing.T) {
+func TestCreateAPIAndReadAPI(t *testing.T) {
 	store := testStore(t)
 
-	e := model.Entity{
-		APIVersion: "backstage.io/v1alpha1",
-		Kind:       "Component",
-		Metadata: model.Metadata{
-			Name:      "my-service",
-			Namespace: "my-namespace",
-		},
-	}
+	a, err := store.CreateAPI(testFullAPI)
+	assert.NoError(t, err)
+	id := a.ID
+	a = testFullAPI
+	a.ID = id
 
-	_, err := store.CreateEntity(e)
+	r, err := store.ReadAPI(testFullAPI.EntityRef())
 	assert.NoError(t, err)
 
-	r, err := store.ReadEntity(e.EntityRef())
-	assert.NoError(t, err)
-
-	assert.Equal(t, e, r)
+	assert.Equal(t, a, r)
 }
 
-func TestDeleteEntity(t *testing.T) {
+func TestDeleteAPI(t *testing.T) {
 	store := testStore(t)
 
-	e := model.Entity{
-		APIVersion: "backstage.io/v1alpha1",
-		Kind:       "Component",
-		Metadata: model.Metadata{
-			Name:      "my-service",
-			Namespace: "my-namespace",
-		},
-	}
+	a, err := store.CreateAPI(testFullAPI)
+	assert.NoError(t, err)
+	id := a.ID
 
-	_, err := store.CreateEntity(e)
+	d, err := store.DeleteAPI(testFullAPI.EntityRef())
+	store.DeleteAPI(testFullAPI.EntityRef())
 	assert.NoError(t, err)
 
-	d, err := store.DeleteEntity(e.EntityRef())
+	assert.Equal(t, a, d)
+
+	_, err = readEntity(a.EntityRef(), store.db)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+
+	rows, err := store.db.Queryx(apiSelectStatement, id)
+	assert.NoError(t, err)
+	assert.False(t, rows.Next())
+}
+
+// ---
+
+func TestCreateUserAndReadUser(t *testing.T) {
+	store := testStore(t)
+
+	u, err := store.CreateUser(testFullUser)
+	assert.NoError(t, err)
+	id := u.ID
+	u = testFullUser
+	u.ID = id
+
+	r, err := store.ReadUser(testFullUser.EntityRef())
 	assert.NoError(t, err)
 
-	assert.Equal(t, e, d)
+	assert.Equal(t, u, r)
+}
+
+func TestDeleteUser(t *testing.T) {
+	store := testStore(t)
+
+	u, err := store.CreateUser(testFullUser)
+	assert.NoError(t, err)
+	id := u.ID
+
+	d, err := store.DeleteUser(testFullUser.EntityRef())
+	assert.NoError(t, err)
+
+	assert.Equal(t, u, d)
+
+	_, err = readEntity(u.EntityRef(), store.db)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+
+	rows, err := store.db.Queryx(userSelectStatement, id)
+	assert.NoError(t, err)
+	assert.False(t, rows.Next())
+}
+
+// ---
+
+func TestCreateGroupAndReadGroup(t *testing.T) {
+	store := testStore(t)
+
+	g, err := store.CreateGroup(testFullGroup)
+	assert.NoError(t, err)
+	id := g.ID
+	g = testFullGroup
+	g.ID = id
+
+	r, err := store.ReadGroup(testFullGroup.EntityRef())
+	assert.NoError(t, err)
+
+	assert.Equal(t, g, r)
+}
+
+func TestDeleteGroup(t *testing.T) {
+	store := testStore(t)
+
+	g, err := store.CreateGroup(testFullGroup)
+	assert.NoError(t, err)
+	id := g.ID
+
+	d, err := store.DeleteGroup(testFullGroup.EntityRef())
+	assert.NoError(t, err)
+
+	assert.Equal(t, g, d)
+
+	_, err = readEntity(g.EntityRef(), store.db)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+
+	rows, err := store.db.Queryx(groupSelectStatement, id)
+	assert.NoError(t, err)
+	assert.False(t, rows.Next())
 }
