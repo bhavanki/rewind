@@ -31,6 +31,9 @@ func NewSqliteStore(connString string) (*sqliteStore, error) {
 }
 
 var (
+	componentInsertStatement = `INSERT INTO component (entity_id, type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	componentSelectStatement = `SELECT type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of FROM component WHERE entity_id = ?`
+
 	apiInsertStatement = `INSERT INTO api (entity_id, type, lifecycle, owner, system, definition) VALUES (?, ?, ?, ?, ?, ?)`
 	apiSelectStatement = `SELECT type, lifecycle, owner, system, definition FROM api WHERE entity_id = ?`
 
@@ -41,6 +44,116 @@ var (
 	groupSelectStatement = `SELECT type, display_name, email, picture, parent, children, members FROM grp WHERE entity_id = ?`
 )
 
+func (s sqliteStore) CreateComponent(c model.Component) (rc model.Component, err error) {
+	var tx *sql.Tx
+	tx, err = s.db.Begin()
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to begin transaction for create: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := createEntity(c.Entity, tx)
+	if err != nil {
+		return model.Component{}, err
+	}
+
+	rc = c
+	rc.Entity.ID = entity.ID
+
+	_, err = tx.Exec(
+		componentInsertStatement,
+		entity.ID,
+		c.Spec.Type,
+		c.Spec.Lifecycle,
+		c.Spec.Owner,
+		c.Spec.System,
+		c.Spec.SubcomponentOf,
+		model.MakeEntityRefs(c.Spec.ProvidesAPIs),
+		model.MakeEntityRefs(c.Spec.ConsumesAPIs),
+		model.MakeEntityRefs(c.Spec.DependsOn),
+		model.MakeEntityRefs(c.Spec.DependencyOf),
+	)
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to create component: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return model.Component{}, fmt.Errorf("failed to commit transaction for create: %w", err)
+	}
+	return rc, nil
+}
+
+func (s sqliteStore) ReadComponent(ref model.EntityRef) (model.Component, error) {
+	entity, err := readEntity(ref, s.db)
+	if err != nil {
+		return model.Component{}, err
+	}
+
+	c := model.Component{
+		Entity: entity,
+	}
+
+	rows, err := s.db.Queryx(componentSelectStatement, entity.ID)
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to query for component: %w", err)
+	}
+	defer func() {
+		rows.Close()
+	}()
+	if rows.Next() {
+		var componentType string
+		var lifecycle string
+		var owner model.EntityRef
+		var system model.EntityRef
+		var subcomponentOf model.EntityRef
+		var providesAPIs model.EntityRefs
+		var consumesAPIs model.EntityRefs
+		var dependsOn model.EntityRefs
+		var dependencyOf model.EntityRefs
+
+		err = rows.Scan(&componentType, &lifecycle, &owner, &system, &subcomponentOf, &providesAPIs, &consumesAPIs, &dependsOn, &dependencyOf)
+		if err != nil {
+			return model.Component{}, fmt.Errorf("failed to scan columns for component: %w", err)
+		}
+		c.Spec = model.ComponentSpec{
+			Type:           componentType,
+			Lifecycle:      lifecycle,
+			Owner:          owner,
+			System:         system,
+			SubcomponentOf: subcomponentOf,
+			ProvidesAPIs:   providesAPIs.Items(),
+			ConsumesAPIs:   consumesAPIs.Items(),
+			DependsOn:      dependsOn.Items(),
+			DependencyOf:   dependencyOf.Items(),
+		}
+	}
+
+	return c, nil
+}
+
+func (s sqliteStore) DeleteComponent(ref model.EntityRef) (model.Component, error) {
+	component, err := s.ReadComponent(ref)
+	if err != nil {
+		return model.Component{}, err
+	}
+
+	_, err = s.db.Exec(entityDeleteStatement, component.Entity.ID)
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to delete entity: %w", err)
+	}
+
+	return component, nil
+}
+
+// ---
+
 func (s sqliteStore) CreateAPI(a model.API) (ra model.API, err error) {
 	var tx *sql.Tx
 	tx, err = s.db.Begin()
@@ -49,7 +162,6 @@ func (s sqliteStore) CreateAPI(a model.API) (ra model.API, err error) {
 	}
 	defer func() {
 		if err != nil {
-			fmt.Println("rollllllback")
 			rerr := tx.Rollback()
 			if rerr != nil {
 				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)

@@ -5,6 +5,10 @@ import (
 )
 
 type Store interface {
+	CreateComponent(c model.Component) (model.Component, error)
+	ReadComponent(ref model.EntityRef) (model.Component, error)
+	DeleteComponent(ref model.EntityRef) (model.Component, error)
+
 	CreateAPI(a model.API) (model.API, error)
 	ReadAPI(ref model.EntityRef) (model.API, error)
 	DeleteAPI(ref model.EntityRef) (model.API, error)

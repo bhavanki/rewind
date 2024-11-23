@@ -13,6 +13,45 @@ func testStore(t *testing.T) *sqliteStore {
 	return store
 }
 
+func TestCreateComponentAndReadComponent(t *testing.T) {
+	store := testStore(t)
+
+	c, err := store.CreateComponent(testFullComponent)
+	assert.NoError(t, err)
+	id := c.ID
+	c = testFullComponent
+	c.ID = id
+
+	r, err := store.ReadComponent(testFullComponent.EntityRef())
+	assert.NoError(t, err)
+
+	assert.Equal(t, c, r)
+}
+
+func TestDeleteComponent(t *testing.T) {
+	store := testStore(t)
+
+	c, err := store.CreateComponent(testFullComponent)
+	assert.NoError(t, err)
+	id := c.ID
+
+	d, err := store.DeleteComponent(testFullComponent.EntityRef())
+	store.DeleteComponent(testFullComponent.EntityRef())
+	assert.NoError(t, err)
+
+	assert.Equal(t, c, d)
+
+	_, err = readEntity(c.EntityRef(), store.db)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
+
+	rows, err := store.db.Queryx(componentSelectStatement, id)
+	assert.NoError(t, err)
+	assert.False(t, rows.Next())
+}
+
+// ---
+
 func TestCreateAPIAndReadAPI(t *testing.T) {
 	store := testStore(t)
 

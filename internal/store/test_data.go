@@ -15,10 +15,35 @@ var (
 		Namespace: "default",
 		Name:      "down",
 	}
+	testComponentEntityRef = model.EntityRef{
+		Kind:      "component",
+		Namespace: "default",
+		Name:      "component",
+	}
+	testAPI1EntityRef = model.EntityRef{
+		Kind:      "api",
+		Namespace: "default",
+		Name:      "api1",
+	}
+	testAPI2EntityRef = model.EntityRef{
+		Kind:      "api",
+		Namespace: "default",
+		Name:      "api2",
+	}
 	testGroupEntityRef = model.EntityRef{
 		Kind:      "group",
 		Namespace: "default",
 		Name:      "group",
+	}
+	testResource1EntityRef = model.EntityRef{
+		Kind:      "resource",
+		Namespace: "default",
+		Name:      "resource1",
+	}
+	testResource2EntityRef = model.EntityRef{
+		Kind:      "resource",
+		Namespace: "default",
+		Name:      "resource2",
 	}
 
 	// fullTestDBEntity = Entity{
@@ -125,6 +150,28 @@ var (
 			},
 		},
 	}
+	testFullComponent = model.Component{
+		Entity: testFullEntity,
+		Spec: model.ComponentSpec{
+			Type:           "service",
+			Lifecycle:      "experimental",
+			Owner:          testOwnerEntityRef,
+			System:         testSystemEntityRef,
+			SubcomponentOf: testComponentEntityRef,
+			ProvidesAPIs: []model.EntityRef{
+				testAPI1EntityRef,
+			},
+			ConsumesAPIs: []model.EntityRef{
+				testAPI2EntityRef,
+			},
+			DependsOn: []model.EntityRef{
+				testResource1EntityRef,
+			},
+			DependencyOf: []model.EntityRef{
+				testResource2EntityRef,
+			},
+		},
+	}
 	testFullAPI = model.API{
 		Entity: testFullEntity,
 		Spec: model.APISpec{
@@ -189,6 +236,8 @@ var (
 )
 
 func init() {
+	testFullComponent.Entity.Kind = "component"
 	testFullAPI.Entity.Kind = "api"
 	testFullUser.Entity.Kind = "user"
+	testFullGroup.Entity.Kind = "user"
 }

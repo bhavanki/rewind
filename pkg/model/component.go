@@ -8,7 +8,7 @@ type Component struct {
 type ComponentSpec struct {
 	Type           string      `yaml:"type"`
 	Lifecycle      string      `yaml:"lifecycle"`
-	Owner          string      `yaml:"owner"`
+	Owner          EntityRef   `yaml:"owner"`
 	System         EntityRef   `yaml:"system,omitempty"`
 	SubcomponentOf EntityRef   `yaml:"subcomponentOf,omitempty"`
 	ProvidesAPIs   []EntityRef `yaml:"providesApis,omitempty"`

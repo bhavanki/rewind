@@ -48,6 +48,24 @@ CREATE TABLE link (
     ON DELETE CASCADE
 );
 
+CREATE TABLE component (
+  id INTEGER PRIMARY KEY,
+  entity_id INTEGER NOT NULL,
+  type VARCHAR(255) NOT NULL,
+  lifecycle VARCHAR(255) NOT NULL,
+  owner VARCHAR(512) NOT NULL,
+  system VARCHAR(512),
+  subcomponent_of VARCHAR(512),
+  provides_apis TEXT,
+  consumes_apis TEXT,
+  depends_on TEXT,
+  dependency_of TEXT,
+  CONSTRAINT fk_entity
+    FOREIGN KEY (entity_id)
+    REFERENCES entity(id)
+    ON DELETE CASCADE
+);
+
 CREATE TABLE api (
   id INTEGER PRIMARY KEY,
   entity_id INTEGER NOT NULL,
@@ -98,6 +116,8 @@ DROP TABLE grp;
 DROP TABLE user;
 
 DROP TABLE api;
+
+DROP TABLE component;
 
 DROP TABLE link;
 
