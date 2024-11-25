@@ -3,6 +3,7 @@ package store
 import (
 	"testing"
 
+	"github.com/bhavanki/rewind/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,13 +17,13 @@ func testStore(t *testing.T) *sqliteStore {
 func TestCreateComponentAndReadComponent(t *testing.T) {
 	store := testStore(t)
 
-	c, err := store.CreateComponent(testFullComponent)
+	c, err := store.CreateComponent(model.TestFullComponent)
 	assert.NoError(t, err)
 	id := c.ID
-	c = testFullComponent
+	c = model.TestFullComponent
 	c.ID = id
 
-	r, err := store.ReadComponent(testFullComponent.EntityRef())
+	r, err := store.ReadComponent(model.TestFullComponent.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, c, r)
@@ -31,12 +32,12 @@ func TestCreateComponentAndReadComponent(t *testing.T) {
 func TestDeleteComponent(t *testing.T) {
 	store := testStore(t)
 
-	c, err := store.CreateComponent(testFullComponent)
+	c, err := store.CreateComponent(model.TestFullComponent)
 	assert.NoError(t, err)
 	id := c.ID
 
-	d, err := store.DeleteComponent(testFullComponent.EntityRef())
-	store.DeleteComponent(testFullComponent.EntityRef())
+	d, err := store.DeleteComponent(model.TestFullComponent.EntityRef())
+	store.DeleteComponent(model.TestFullComponent.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, c, d)
@@ -55,13 +56,13 @@ func TestDeleteComponent(t *testing.T) {
 func TestCreateAPIAndReadAPI(t *testing.T) {
 	store := testStore(t)
 
-	a, err := store.CreateAPI(testFullAPI)
+	a, err := store.CreateAPI(model.TestFullAPI)
 	assert.NoError(t, err)
 	id := a.ID
-	a = testFullAPI
+	a = model.TestFullAPI
 	a.ID = id
 
-	r, err := store.ReadAPI(testFullAPI.EntityRef())
+	r, err := store.ReadAPI(model.TestFullAPI.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, a, r)
@@ -70,12 +71,12 @@ func TestCreateAPIAndReadAPI(t *testing.T) {
 func TestDeleteAPI(t *testing.T) {
 	store := testStore(t)
 
-	a, err := store.CreateAPI(testFullAPI)
+	a, err := store.CreateAPI(model.TestFullAPI)
 	assert.NoError(t, err)
 	id := a.ID
 
-	d, err := store.DeleteAPI(testFullAPI.EntityRef())
-	store.DeleteAPI(testFullAPI.EntityRef())
+	d, err := store.DeleteAPI(model.TestFullAPI.EntityRef())
+	store.DeleteAPI(model.TestFullAPI.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, a, d)
@@ -94,13 +95,13 @@ func TestDeleteAPI(t *testing.T) {
 func TestCreateUserAndReadUser(t *testing.T) {
 	store := testStore(t)
 
-	u, err := store.CreateUser(testFullUser)
+	u, err := store.CreateUser(model.TestFullUser)
 	assert.NoError(t, err)
 	id := u.ID
-	u = testFullUser
+	u = model.TestFullUser
 	u.ID = id
 
-	r, err := store.ReadUser(testFullUser.EntityRef())
+	r, err := store.ReadUser(model.TestFullUser.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, u, r)
@@ -109,11 +110,11 @@ func TestCreateUserAndReadUser(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	store := testStore(t)
 
-	u, err := store.CreateUser(testFullUser)
+	u, err := store.CreateUser(model.TestFullUser)
 	assert.NoError(t, err)
 	id := u.ID
 
-	d, err := store.DeleteUser(testFullUser.EntityRef())
+	d, err := store.DeleteUser(model.TestFullUser.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, u, d)
@@ -132,13 +133,13 @@ func TestDeleteUser(t *testing.T) {
 func TestCreateGroupAndReadGroup(t *testing.T) {
 	store := testStore(t)
 
-	g, err := store.CreateGroup(testFullGroup)
+	g, err := store.CreateGroup(model.TestFullGroup)
 	assert.NoError(t, err)
 	id := g.ID
-	g = testFullGroup
+	g = model.TestFullGroup
 	g.ID = id
 
-	r, err := store.ReadGroup(testFullGroup.EntityRef())
+	r, err := store.ReadGroup(model.TestFullGroup.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, g, r)
@@ -147,11 +148,11 @@ func TestCreateGroupAndReadGroup(t *testing.T) {
 func TestDeleteGroup(t *testing.T) {
 	store := testStore(t)
 
-	g, err := store.CreateGroup(testFullGroup)
+	g, err := store.CreateGroup(model.TestFullGroup)
 	assert.NoError(t, err)
 	id := g.ID
 
-	d, err := store.DeleteGroup(testFullGroup.EntityRef())
+	d, err := store.DeleteGroup(model.TestFullGroup.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, g, d)
