@@ -1,0 +1,42 @@
+apiVersion: backstage.io/v1alpha1
+kind: component
+metadata:
+  name: my-service
+  namespace: my-namespace
+  title: my-title
+  description: my-description
+  labels:
+    key1: value1
+    key2: value2
+    key3: value3
+  annotations:
+    keya: valuea
+    keyb: valueb
+    keyc: valuec
+  tags:
+    - tag1
+    - tag2
+    - tag3
+  links:
+    - url: http://example.com/url1
+      title: link1
+      icon: icon1
+      type: linktype1
+    - url: http://example.com/url2
+      title: link2
+      icon: icon2
+      type: linktype2
+spec:
+  type: service
+  lifecycle: experimental
+  owner: user:default/owner
+  system: system:default/down
+  subcomponentOf: component:default/component
+  providesApis:
+    - api:default/api1
+  consumesApis:
+    - api:default/api2
+  dependsOn:
+    - resource:default/resource1
+  dependencyOf:
+    - resource:default/resource2

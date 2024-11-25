@@ -1,8 +1,8 @@
 package model
 
 type Component struct {
-	Entity
-	Spec ComponentSpec `yaml:"spec"`
+	Entity `yaml:"entity,inline"`
+	Spec   ComponentSpec `yaml:"spec"`
 }
 
 type ComponentSpec struct {
