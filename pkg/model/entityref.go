@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type EntityRef struct {
@@ -55,6 +57,27 @@ func MakeEntityRef(s string) (EntityRef, error) {
 func (e EntityRef) Empty() bool {
 	return e.Kind == "" && e.Namespace == "" && e.Name == ""
 }
+
+func (e EntityRef) MarshalYAML() (any, error) {
+	return e.String(), nil
+}
+
+func (e *EntityRef) UnmarshalYAML(value *yaml.Node) error {
+	if value.Tag != "!!str" {
+		return fmt.Errorf("cannot unmarshal entity reference from type %s", value.Tag)
+	}
+	ref, err := MakeEntityRef(value.Value)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal entity reference from %s: %w", value.Value, err)
+	}
+	e.Kind = ref.Kind
+	e.Namespace = ref.Namespace
+	e.Name = ref.Name
+	return nil
+}
+
+var _ yaml.Marshaler = EntityRef{}
+var _ yaml.Unmarshaler = &EntityRef{}
 
 func (e *EntityRef) Scan(src any) error {
 	if src == nil {
@@ -134,3 +157,6 @@ func (e EntityRefs) Value() (driver.Value, error) {
 	}
 	return strings.Join(valStrings, " "), nil
 }
+
+var _ sql.Scanner = &EntityRefs{}
+var _ driver.Valuer = EntityRefs{}

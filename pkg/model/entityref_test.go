@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 func TestEntityRefString(t *testing.T) {
@@ -358,6 +359,60 @@ func TestEntityRefsValue(t *testing.T) {
 			value, err := tc.es.Value()
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, value)
+		})
+	}
+}
+
+func testEntityRefYAML(t *testing.T) {
+	type testCase struct {
+		e           EntityRef
+		description string
+	}
+	tcs := []testCase{
+		{
+			e: EntityRef{
+				Kind:      "kind",
+				Namespace: "namespace",
+				Name:      "name",
+			},
+			description: "full entity ref",
+		},
+		{
+			e: EntityRef{
+				Kind:      "kind",
+				Namespace: "",
+				Name:      "name",
+			},
+			description: "no namespace",
+		},
+		{
+			e: EntityRef{
+				Kind:      "",
+				Namespace: "namespace",
+				Name:      "name",
+			},
+			description: "no kind",
+		},
+		{
+			e: EntityRef{
+				Kind:      "",
+				Namespace: "",
+				Name:      "name",
+			},
+			description: "name only",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			out, err := yaml.Marshal(tc.e)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.e.String(), string(out))
+
+			var r EntityRef
+			err = yaml.Unmarshal(out, &r)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.e, r)
 		})
 	}
 }
