@@ -4,6 +4,8 @@ import (
 	"github.com/bhavanki/rewind/pkg/model"
 )
 
+//go:generate moq -out store_mock.go . Store
+
 type Store interface {
 	CreateComponent(c model.Component) (model.Component, error)
 	ReadComponent(ref model.EntityRef) (model.Component, error)

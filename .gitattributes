@@ -1,1 +1,2 @@
 go.sum linguist-generated=true
+internal/store/store_mock.go linguist-generated=true
