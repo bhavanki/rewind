@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql/driver"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -363,7 +364,7 @@ func TestEntityRefsValue(t *testing.T) {
 	}
 }
 
-func testEntityRefYAML(t *testing.T) {
+func TestEntityRefYAML(t *testing.T) {
 	type testCase struct {
 		e           EntityRef
 		description string
@@ -407,7 +408,7 @@ func testEntityRefYAML(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			out, err := yaml.Marshal(tc.e)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.e.String(), string(out))
+			assert.Equal(t, tc.e.String(), strings.TrimSpace(string(out)))
 
 			var r EntityRef
 			err = yaml.Unmarshal(out, &r)

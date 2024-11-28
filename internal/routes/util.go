@@ -2,8 +2,8 @@ package routes
 
 import (
 	"fmt"
-	"io"
-	"log/slog"
+	// "io"
+	// "log/slog"
 	"net/http"
 
 	"github.com/bhavanki/rewind/pkg/model"
@@ -29,10 +29,10 @@ func verifyEntityRef(c *gin.Context, expected model.EntityRef, actual model.Enti
 	return true
 }
 
-func logRequestBody(c *gin.Context) {
-	b, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		slog.Debug("failed to log request body", "error", err.Error())
-	}
-	slog.Debug(string(b))
-}
+// func logRequestBody(c *gin.Context) {
+// 	b, err := io.ReadAll(c.Request.Body)
+// 	if err != nil {
+// 		slog.Debug("failed to log request body", "error", err.Error())
+// 	}
+// 	slog.Debug(string(b))
+// }

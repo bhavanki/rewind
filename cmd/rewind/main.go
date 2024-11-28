@@ -8,7 +8,7 @@ import (
 
 func main() {
 	r := gin.Default()
-	r.SetTrustedProxies(nil)
+	_ = r.SetTrustedProxies(nil)
 
 	// store, err := store.NewSqliteStore("file::memory:?cache=shared")
 	store, err := store.NewSqliteStore("file::memory:")
@@ -18,5 +18,5 @@ func main() {
 
 	routes.SetupRoutes(r, store)
 
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	_ = r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

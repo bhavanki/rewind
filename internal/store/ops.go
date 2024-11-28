@@ -11,8 +11,8 @@ import (
 
 var (
 	entityInsertStatement = `INSERT INTO entity (apiVersion, kind, namespace, name, title, description, tags) VALUES (?, ?, ?, ?, ?, ?, ?)`
-	entityIDStatement     = `SELECT id FROM entity WHERE kind = ? AND namespace = ? AND name = ?`
-	entityReadStatement   = `SELECT id, apiVersion, kind, namespace, name, title, description, tags FROM entity WHERE kind = ? AND namespace = ? AND name = ?`
+	// entityIDStatement     = `SELECT id FROM entity WHERE kind = ? AND namespace = ? AND name = ?`
+	entityReadStatement = `SELECT id, apiVersion, kind, namespace, name, title, description, tags FROM entity WHERE kind = ? AND namespace = ? AND name = ?`
 
 	labelInsertStatement      = `INSERT INTO label (entity_id, k, v) VALUES (?, ?, ?)`
 	labelSelectStatement      = `SELECT k, v FROM label WHERE entity_id = ?`
@@ -87,22 +87,22 @@ func createEntity(e model.Entity, tx *sql.Tx) (model.Entity, error) {
 	return re, nil
 }
 
-func getEntityID(ref model.EntityRef, db *sqlx.DB) (int64, error) {
-	rows, err := db.Queryx(entityIDStatement, ref.Kind, ref.Namespace, ref.Name)
-	if err != nil {
-		return 0, fmt.Errorf("failed to query for entity ID: %w", err)
-	}
-	defer rows.Close()
-	if !rows.Next() {
-		return 0, fmt.Errorf("entity not found")
-	}
-	var id int64
-	err = rows.Scan(&id)
-	if err != nil {
-		return 0, fmt.Errorf("failed to scan ID column for entity: %w", err)
-	}
-	return id, nil
-}
+// func getEntityID(ref model.EntityRef, db *sqlx.DB) (int64, error) {
+// 	rows, err := db.Queryx(entityIDStatement, ref.Kind, ref.Namespace, ref.Name)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("failed to query for entity ID: %w", err)
+// 	}
+// 	defer rows.Close()
+// 	if !rows.Next() {
+// 		return 0, fmt.Errorf("entity not found")
+// 	}
+// 	var id int64
+// 	err = rows.Scan(&id)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("failed to scan ID column for entity: %w", err)
+// 	}
+// 	return id, nil
+// }
 
 func readEntity(ref model.EntityRef, db *sqlx.DB) (model.Entity, error) {
 	rows, err := db.Queryx(entityReadStatement, ref.Kind, ref.Namespace, ref.Name)
