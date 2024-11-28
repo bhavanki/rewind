@@ -144,9 +144,9 @@ func (s sqliteStore) DeleteComponent(ref model.EntityRef) (model.Component, erro
 		return model.Component{}, err
 	}
 
-	_, err = s.db.Exec(entityDeleteStatement, component.Entity.ID)
+	err = deleteEntity(component.Entity.ID, s.db)
 	if err != nil {
-		return model.Component{}, fmt.Errorf("failed to delete entity: %w", err)
+		return model.Component{}, fmt.Errorf("failed to delete component: %w", err)
 	}
 
 	return component, nil
@@ -241,9 +241,9 @@ func (s sqliteStore) DeleteAPI(ref model.EntityRef) (model.API, error) {
 		return model.API{}, err
 	}
 
-	_, err = s.db.Exec(entityDeleteStatement, api.Entity.ID)
+	err = deleteEntity(api.Entity.ID, s.db)
 	if err != nil {
-		return model.API{}, fmt.Errorf("failed to delete entity: %w", err)
+		return model.API{}, fmt.Errorf("failed to delete API: %w", err)
 	}
 
 	return api, nil
@@ -335,9 +335,9 @@ func (s sqliteStore) DeleteUser(ref model.EntityRef) (model.User, error) {
 		return model.User{}, err
 	}
 
-	_, err = s.db.Exec(entityDeleteStatement, user.Entity.ID)
+	err = deleteEntity(user.Entity.ID, s.db)
 	if err != nil {
-		return model.User{}, fmt.Errorf("failed to delete entity: %w", err)
+		return model.User{}, fmt.Errorf("failed to delete user: %w", err)
 	}
 
 	return user, nil
@@ -433,15 +433,15 @@ func (s sqliteStore) ReadGroup(ref model.EntityRef) (model.Group, error) {
 }
 
 func (s sqliteStore) DeleteGroup(ref model.EntityRef) (model.Group, error) {
-	user, err := s.ReadGroup(ref)
+	group, err := s.ReadGroup(ref)
 	if err != nil {
 		return model.Group{}, err
 	}
 
-	_, err = s.db.Exec(entityDeleteStatement, user.Entity.ID)
+	err = deleteEntity(group.Entity.ID, s.db)
 	if err != nil {
-		return model.Group{}, fmt.Errorf("failed to delete entity: %w", err)
+		return model.Group{}, fmt.Errorf("failed to delete group: %w", err)
 	}
 
-	return user, nil
+	return group, nil
 }

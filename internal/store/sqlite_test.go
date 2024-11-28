@@ -37,7 +37,6 @@ func TestDeleteComponent(t *testing.T) {
 	id := c.ID
 
 	d, err := store.DeleteComponent(model.TestFullComponent.EntityRef())
-	store.DeleteComponent(model.TestFullComponent.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, c, d)
@@ -76,7 +75,6 @@ func TestDeleteAPI(t *testing.T) {
 	id := a.ID
 
 	d, err := store.DeleteAPI(model.TestFullAPI.EntityRef())
-	store.DeleteAPI(model.TestFullAPI.EntityRef())
 	assert.NoError(t, err)
 
 	assert.Equal(t, a, d)

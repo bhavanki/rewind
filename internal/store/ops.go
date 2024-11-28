@@ -200,13 +200,8 @@ func readEntity(ref model.EntityRef, db *sqlx.DB) (model.Entity, error) {
 	return e, nil
 }
 
-func deleteEntity(ref model.EntityRef, db *sqlx.DB) error {
-	id, err := getEntityID(ref, db)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(entityDeleteStatement, id)
+func deleteEntity(id int64, db *sqlx.DB) error {
+	_, err := db.Exec(entityDeleteStatement, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete entity: %w", err)
 	}

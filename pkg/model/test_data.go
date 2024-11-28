@@ -2,42 +2,42 @@ package model
 
 var (
 	TestOwnerEntityRef = EntityRef{
-		Kind:      "user",
+		Kind:      KindUser,
 		Namespace: "default",
 		Name:      "owner",
 	}
 	TestSystemEntityRef = EntityRef{
-		Kind:      "system",
+		Kind:      KindSystem,
 		Namespace: "default",
 		Name:      "down",
 	}
 	TestComponentEntityRef = EntityRef{
-		Kind:      "component",
+		Kind:      KindComponent,
 		Namespace: "default",
 		Name:      "component",
 	}
 	TestAPI1EntityRef = EntityRef{
-		Kind:      "api",
+		Kind:      KindAPI,
 		Namespace: "default",
 		Name:      "api1",
 	}
 	TestAPI2EntityRef = EntityRef{
-		Kind:      "api",
+		Kind:      KindAPI,
 		Namespace: "default",
 		Name:      "api2",
 	}
 	TestGroupEntityRef = EntityRef{
-		Kind:      "group",
+		Kind:      KindGroup,
 		Namespace: "default",
 		Name:      "group",
 	}
 	TestResource1EntityRef = EntityRef{
-		Kind:      "resource",
+		Kind:      KindResource,
 		Namespace: "default",
 		Name:      "resource1",
 	}
 	TestResource2EntityRef = EntityRef{
-		Kind:      "resource",
+		Kind:      KindResource,
 		Namespace: "default",
 		Name:      "resource2",
 	}
@@ -134,7 +134,7 @@ var (
 			Parent: TestGroupEntityRef,
 			Children: []EntityRef{
 				{
-					Kind:      "group",
+					Kind:      KindGroup,
 					Namespace: "default",
 					Name:      "child",
 				},
@@ -147,7 +147,7 @@ var (
 
 	TestMinimalEntity = Entity{
 		APIVersion: "backstage.io/v1alpha1",
-		Kind:       "api",
+		Kind:       KindAPI,
 		Metadata: Metadata{
 			Name:      "my-service",
 			Namespace: "my-namespace",
@@ -156,8 +156,8 @@ var (
 )
 
 func init() {
-	TestFullComponent.Entity.Kind = "component"
-	TestFullAPI.Entity.Kind = "api"
-	TestFullUser.Entity.Kind = "user"
-	TestFullGroup.Entity.Kind = "user"
+	TestFullComponent.Entity.Kind = KindComponent
+	TestFullAPI.Entity.Kind = KindAPI
+	TestFullUser.Entity.Kind = KindUser
+	TestFullGroup.Entity.Kind = KindGroup
 }
