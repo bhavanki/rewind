@@ -16,7 +16,7 @@ lint:
 
 .PHONY: test
 test: internal/store/store_mock.go
-	CGO_ENABLED=1 go test ./...
+	CGO_ENABLED=1 go test --coverprofile=coverage.out ./...
 
 .PHONY: clean
 clean:
