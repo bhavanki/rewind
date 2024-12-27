@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/bhavanki/rewind/pkg/model"
@@ -327,6 +328,10 @@ func (s sqliteStore) ReadAPI(ref model.EntityRef) (a model.API, err error) {
 	return a, nil
 }
 
+func (s sqliteStore) UpdateAPI(a model.API) (ra model.API, err error) {
+	return model.API{}, errors.New("not yet implemented")
+}
+
 func (s sqliteStore) DeleteAPI(ref model.EntityRef) (model.API, error) {
 	api, err := s.ReadAPI(ref)
 	if err != nil {
@@ -436,6 +441,10 @@ func (s sqliteStore) ReadUser(ref model.EntityRef) (u model.User, err error) {
 		return model.User{}, fmt.Errorf("failed to commit transaction for read: %w", err)
 	}
 	return u, nil
+}
+
+func (s sqliteStore) UpdateUser(u model.User) (ru model.User, err error) {
+	return model.User{}, errors.New("not yet implemented")
 }
 
 func (s sqliteStore) DeleteUser(ref model.EntityRef) (model.User, error) {
@@ -556,6 +565,10 @@ func (s sqliteStore) ReadGroup(ref model.EntityRef) (g model.Group, err error) {
 		return model.Group{}, fmt.Errorf("failed to commit transaction for read: %w", err)
 	}
 	return g, nil
+}
+
+func (s sqliteStore) UpdateGroup(g model.Group) (rg model.Group, err error) {
+	return model.Group{}, errors.New("not yet implemented")
 }
 
 func (s sqliteStore) DeleteGroup(ref model.EntityRef) (model.Group, error) {

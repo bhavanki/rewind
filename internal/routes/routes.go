@@ -16,6 +16,7 @@ func SetupRoutes(r *gin.Engine, store store.Store) {
 
 	r.GET("/:kind/:namespace/:name", withStore(store, ReadEntity))
 	r.POST("/:kind/:namespace/:name", withStore(store, CreateEntity))
+	r.PUT("/:kind/:namespace/:name", withStore(store, UpdateEntity))
 	r.DELETE("/:kind/:namespace/:name", withStore(store, DeleteEntity))
 }
 

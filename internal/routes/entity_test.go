@@ -59,9 +59,28 @@ func TestReadEntity_Component(t *testing.T) {
 	assert.Equal(t, model.TestFullComponent, component)
 }
 
-// func TestUpdateEntity_Component(t *testing.T) {
+func TestUpdateEntity_Component(t *testing.T) {
+	r := gin.Default()
+	var component model.Component
+	s := &store.StoreMock{
+		UpdateComponentFunc: func(c model.Component) (model.Component, error) {
+			component = c
+			return c, nil
+		},
+	}
+	SetupRoutes(r, s)
 
-// }
+	w := httptest.NewRecorder()
+	componentYAML, err := yaml.Marshal(model.TestFullComponent)
+	require.NoError(t, err)
+	req, err := http.NewRequest("PUT", "/component/my-namespace/my-service", strings.NewReader(string(componentYAML)))
+	require.NoError(t, err)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	assert.Equal(t, model.TestFullComponent, component)
+}
 
 func TestDeleteEntity_Component(t *testing.T) {
 	r := gin.Default()

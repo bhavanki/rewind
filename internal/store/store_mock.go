@@ -54,8 +54,17 @@ var _ Store = &StoreMock{}
 //			ReadUserFunc: func(ref model.EntityRef) (model.User, error) {
 //				panic("mock out the ReadUser method")
 //			},
+//			UpdateAPIFunc: func(a model.API) (model.API, error) {
+//				panic("mock out the UpdateAPI method")
+//			},
 //			UpdateComponentFunc: func(c model.Component) (model.Component, error) {
 //				panic("mock out the UpdateComponent method")
+//			},
+//			UpdateGroupFunc: func(g model.Group) (model.Group, error) {
+//				panic("mock out the UpdateGroup method")
+//			},
+//			UpdateUserFunc: func(u model.User) (model.User, error) {
+//				panic("mock out the UpdateUser method")
 //			},
 //		}
 //
@@ -100,8 +109,17 @@ type StoreMock struct {
 	// ReadUserFunc mocks the ReadUser method.
 	ReadUserFunc func(ref model.EntityRef) (model.User, error)
 
+	// UpdateAPIFunc mocks the UpdateAPI method.
+	UpdateAPIFunc func(a model.API) (model.API, error)
+
 	// UpdateComponentFunc mocks the UpdateComponent method.
 	UpdateComponentFunc func(c model.Component) (model.Component, error)
+
+	// UpdateGroupFunc mocks the UpdateGroup method.
+	UpdateGroupFunc func(g model.Group) (model.Group, error)
+
+	// UpdateUserFunc mocks the UpdateUser method.
+	UpdateUserFunc func(u model.User) (model.User, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -165,10 +183,25 @@ type StoreMock struct {
 			// Ref is the ref argument value.
 			Ref model.EntityRef
 		}
+		// UpdateAPI holds details about calls to the UpdateAPI method.
+		UpdateAPI []struct {
+			// A is the a argument value.
+			A model.API
+		}
 		// UpdateComponent holds details about calls to the UpdateComponent method.
 		UpdateComponent []struct {
 			// C is the c argument value.
 			C model.Component
+		}
+		// UpdateGroup holds details about calls to the UpdateGroup method.
+		UpdateGroup []struct {
+			// G is the g argument value.
+			G model.Group
+		}
+		// UpdateUser holds details about calls to the UpdateUser method.
+		UpdateUser []struct {
+			// U is the u argument value.
+			U model.User
 		}
 	}
 	lockCreateAPI       sync.RWMutex
@@ -183,7 +216,10 @@ type StoreMock struct {
 	lockReadComponent   sync.RWMutex
 	lockReadGroup       sync.RWMutex
 	lockReadUser        sync.RWMutex
+	lockUpdateAPI       sync.RWMutex
 	lockUpdateComponent sync.RWMutex
+	lockUpdateGroup     sync.RWMutex
+	lockUpdateUser      sync.RWMutex
 }
 
 // CreateAPI calls CreateAPIFunc.
@@ -570,6 +606,38 @@ func (mock *StoreMock) ReadUserCalls() []struct {
 	return calls
 }
 
+// UpdateAPI calls UpdateAPIFunc.
+func (mock *StoreMock) UpdateAPI(a model.API) (model.API, error) {
+	if mock.UpdateAPIFunc == nil {
+		panic("StoreMock.UpdateAPIFunc: method is nil but Store.UpdateAPI was just called")
+	}
+	callInfo := struct {
+		A model.API
+	}{
+		A: a,
+	}
+	mock.lockUpdateAPI.Lock()
+	mock.calls.UpdateAPI = append(mock.calls.UpdateAPI, callInfo)
+	mock.lockUpdateAPI.Unlock()
+	return mock.UpdateAPIFunc(a)
+}
+
+// UpdateAPICalls gets all the calls that were made to UpdateAPI.
+// Check the length with:
+//
+//	len(mockedStore.UpdateAPICalls())
+func (mock *StoreMock) UpdateAPICalls() []struct {
+	A model.API
+} {
+	var calls []struct {
+		A model.API
+	}
+	mock.lockUpdateAPI.RLock()
+	calls = mock.calls.UpdateAPI
+	mock.lockUpdateAPI.RUnlock()
+	return calls
+}
+
 // UpdateComponent calls UpdateComponentFunc.
 func (mock *StoreMock) UpdateComponent(c model.Component) (model.Component, error) {
 	if mock.UpdateComponentFunc == nil {
@@ -599,5 +667,69 @@ func (mock *StoreMock) UpdateComponentCalls() []struct {
 	mock.lockUpdateComponent.RLock()
 	calls = mock.calls.UpdateComponent
 	mock.lockUpdateComponent.RUnlock()
+	return calls
+}
+
+// UpdateGroup calls UpdateGroupFunc.
+func (mock *StoreMock) UpdateGroup(g model.Group) (model.Group, error) {
+	if mock.UpdateGroupFunc == nil {
+		panic("StoreMock.UpdateGroupFunc: method is nil but Store.UpdateGroup was just called")
+	}
+	callInfo := struct {
+		G model.Group
+	}{
+		G: g,
+	}
+	mock.lockUpdateGroup.Lock()
+	mock.calls.UpdateGroup = append(mock.calls.UpdateGroup, callInfo)
+	mock.lockUpdateGroup.Unlock()
+	return mock.UpdateGroupFunc(g)
+}
+
+// UpdateGroupCalls gets all the calls that were made to UpdateGroup.
+// Check the length with:
+//
+//	len(mockedStore.UpdateGroupCalls())
+func (mock *StoreMock) UpdateGroupCalls() []struct {
+	G model.Group
+} {
+	var calls []struct {
+		G model.Group
+	}
+	mock.lockUpdateGroup.RLock()
+	calls = mock.calls.UpdateGroup
+	mock.lockUpdateGroup.RUnlock()
+	return calls
+}
+
+// UpdateUser calls UpdateUserFunc.
+func (mock *StoreMock) UpdateUser(u model.User) (model.User, error) {
+	if mock.UpdateUserFunc == nil {
+		panic("StoreMock.UpdateUserFunc: method is nil but Store.UpdateUser was just called")
+	}
+	callInfo := struct {
+		U model.User
+	}{
+		U: u,
+	}
+	mock.lockUpdateUser.Lock()
+	mock.calls.UpdateUser = append(mock.calls.UpdateUser, callInfo)
+	mock.lockUpdateUser.Unlock()
+	return mock.UpdateUserFunc(u)
+}
+
+// UpdateUserCalls gets all the calls that were made to UpdateUser.
+// Check the length with:
+//
+//	len(mockedStore.UpdateUserCalls())
+func (mock *StoreMock) UpdateUserCalls() []struct {
+	U model.User
+} {
+	var calls []struct {
+		U model.User
+	}
+	mock.lockUpdateUser.RLock()
+	calls = mock.calls.UpdateUser
+	mock.lockUpdateUser.RUnlock()
 	return calls
 }

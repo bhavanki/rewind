@@ -122,6 +122,75 @@ func ReadEntity(c *gin.Context, store store.Store) {
 	}
 }
 
+func UpdateEntity(c *gin.Context, store store.Store) {
+	expectedEntityRef := expectedEntityRef(c)
+	kind := expectedEntityRef.Kind
+
+	switch kind {
+	case model.KindComponent:
+		var component model.Component
+		if err := c.ShouldBindYAML(&component); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !verifyEntityRef(c, component.Entity.EntityRef(), expectedEntityRef) {
+			return
+		}
+		if _, err := store.UpdateComponent(component); err != nil {
+			slog.Error("failed to update component", "entityRef", expectedEntityRef.String(), "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update component"})
+			return
+		}
+	case model.KindAPI:
+		var api model.API
+		if err := c.ShouldBindYAML(&api); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !verifyEntityRef(c, api.Entity.EntityRef(), expectedEntityRef) {
+			return
+		}
+		if _, err := store.UpdateAPI(api); err != nil {
+			slog.Error("failed to update API", "entityRef", expectedEntityRef.String(), "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update API"})
+			return
+		}
+	case model.KindUser:
+		var user model.User
+		if err := c.ShouldBindYAML(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !verifyEntityRef(c, user.Entity.EntityRef(), expectedEntityRef) {
+			return
+		}
+		if _, err := store.UpdateUser(user); err != nil {
+			slog.Error("failed to update user", "entityRef", expectedEntityRef.String(), "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
+			return
+		}
+	case model.KindGroup:
+		var group model.Group
+		if err := c.ShouldBindYAML(&group); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if !verifyEntityRef(c, group.Entity.EntityRef(), expectedEntityRef) {
+			return
+		}
+		if _, err := store.UpdateGroup(group); err != nil {
+			slog.Error("failed to update group", "entityRef", expectedEntityRef.String(), "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update group"})
+			return
+		}
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("unsupported kind %s", kind)})
+		return
+	}
+
+	c.Status(http.StatusAccepted)
+}
+
 func DeleteEntity(c *gin.Context, store store.Store) {
 	expectedEntityRef := expectedEntityRef(c)
 	kind := expectedEntityRef.Kind
