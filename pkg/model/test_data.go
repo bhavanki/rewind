@@ -6,15 +6,30 @@ var (
 		Namespace: "default",
 		Name:      "owner",
 	}
+	TestOwner2EntityRef = EntityRef{
+		Kind:      KindUser,
+		Namespace: "default",
+		Name:      "owner2",
+	}
 	TestSystemEntityRef = EntityRef{
 		Kind:      KindSystem,
 		Namespace: "default",
 		Name:      "down",
 	}
+	TestSystem2EntityRef = EntityRef{
+		Kind:      KindSystem,
+		Namespace: "default",
+		Name:      "shock",
+	}
 	TestComponentEntityRef = EntityRef{
 		Kind:      KindComponent,
 		Namespace: "default",
 		Name:      "component",
+	}
+	TestComponent2EntityRef = EntityRef{
+		Kind:      KindComponent,
+		Namespace: "default",
+		Name:      "component2",
 	}
 	TestAPI1EntityRef = EntityRef{
 		Kind:      KindAPI,
@@ -80,8 +95,8 @@ var (
 	TestFullComponent = Component{
 		Entity: TestFullEntity,
 		Spec: ComponentSpec{
-			Type:           "service",
-			Lifecycle:      "experimental",
+			Type:           ComponentTypeService,
+			Lifecycle:      ComponentLifecycleExperimental,
 			Owner:          TestOwnerEntityRef,
 			System:         TestSystemEntityRef,
 			SubcomponentOf: TestComponentEntityRef,

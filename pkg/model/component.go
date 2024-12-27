@@ -1,5 +1,15 @@
 package model
 
+const (
+	ComponentTypeService = "service"
+	ComponentTypeWebsite = "website"
+	ComponentTypeLibrary = "library"
+
+	ComponentLifecycleExperimental = "experimental"
+	ComponentLifecycleProduction   = "production"
+	ComponentLifecycleDeprecated   = "deprecated"
+)
+
 type Component struct {
 	Entity `yaml:"entity,inline"`
 	Spec   ComponentSpec `yaml:"spec"`
