@@ -1,0 +1,2 @@
+ignore:
+  - "internal/store/store_mock.go"
