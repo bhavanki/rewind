@@ -38,6 +38,7 @@ CREATE UNIQUE INDEX annotation_idx ON annotation (entity_id, k);
 CREATE TABLE link (
   id INTEGER PRIMARY KEY,
   entity_id INTEGER NOT NULL,
+  idx INTEGER NOT NULL,
   url TEXT NOT NULL,
   title TEXT,
   icon TEXT,
@@ -47,6 +48,7 @@ CREATE TABLE link (
     REFERENCES entity(id)
     ON DELETE CASCADE
 );
+CREATE UNIQUE INDEX link_idx ON link (entity_id, url);
 
 CREATE TABLE component (
   id INTEGER PRIMARY KEY,
@@ -120,6 +122,7 @@ DROP TABLE api;
 DROP TABLE component;
 
 DROP TABLE link;
+DROP TABLE link_idx;
 
 DROP INDEX annotation_idx;
 DROP TABLE annotation;

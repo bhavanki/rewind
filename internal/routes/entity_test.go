@@ -59,6 +59,10 @@ func TestReadEntity_Component(t *testing.T) {
 	assert.Equal(t, model.TestFullComponent, component)
 }
 
+// func TestUpdateEntity_Component(t *testing.T) {
+
+// }
+
 func TestDeleteEntity_Component(t *testing.T) {
 	r := gin.Default()
 	s := &store.StoreMock{

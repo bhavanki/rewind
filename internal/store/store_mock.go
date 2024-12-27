@@ -54,6 +54,9 @@ var _ Store = &StoreMock{}
 //			ReadUserFunc: func(ref model.EntityRef) (model.User, error) {
 //				panic("mock out the ReadUser method")
 //			},
+//			UpdateComponentFunc: func(c model.Component) (model.Component, error) {
+//				panic("mock out the UpdateComponent method")
+//			},
 //		}
 //
 //		// use mockedStore in code that requires Store
@@ -96,6 +99,9 @@ type StoreMock struct {
 
 	// ReadUserFunc mocks the ReadUser method.
 	ReadUserFunc func(ref model.EntityRef) (model.User, error)
+
+	// UpdateComponentFunc mocks the UpdateComponent method.
+	UpdateComponentFunc func(c model.Component) (model.Component, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -159,6 +165,11 @@ type StoreMock struct {
 			// Ref is the ref argument value.
 			Ref model.EntityRef
 		}
+		// UpdateComponent holds details about calls to the UpdateComponent method.
+		UpdateComponent []struct {
+			// C is the c argument value.
+			C model.Component
+		}
 	}
 	lockCreateAPI       sync.RWMutex
 	lockCreateComponent sync.RWMutex
@@ -172,6 +183,7 @@ type StoreMock struct {
 	lockReadComponent   sync.RWMutex
 	lockReadGroup       sync.RWMutex
 	lockReadUser        sync.RWMutex
+	lockUpdateComponent sync.RWMutex
 }
 
 // CreateAPI calls CreateAPIFunc.
@@ -555,5 +567,37 @@ func (mock *StoreMock) ReadUserCalls() []struct {
 	mock.lockReadUser.RLock()
 	calls = mock.calls.ReadUser
 	mock.lockReadUser.RUnlock()
+	return calls
+}
+
+// UpdateComponent calls UpdateComponentFunc.
+func (mock *StoreMock) UpdateComponent(c model.Component) (model.Component, error) {
+	if mock.UpdateComponentFunc == nil {
+		panic("StoreMock.UpdateComponentFunc: method is nil but Store.UpdateComponent was just called")
+	}
+	callInfo := struct {
+		C model.Component
+	}{
+		C: c,
+	}
+	mock.lockUpdateComponent.Lock()
+	mock.calls.UpdateComponent = append(mock.calls.UpdateComponent, callInfo)
+	mock.lockUpdateComponent.Unlock()
+	return mock.UpdateComponentFunc(c)
+}
+
+// UpdateComponentCalls gets all the calls that were made to UpdateComponent.
+// Check the length with:
+//
+//	len(mockedStore.UpdateComponentCalls())
+func (mock *StoreMock) UpdateComponentCalls() []struct {
+	C model.Component
+} {
+	var calls []struct {
+		C model.Component
+	}
+	mock.lockUpdateComponent.RLock()
+	calls = mock.calls.UpdateComponent
+	mock.lockUpdateComponent.RUnlock()
 	return calls
 }

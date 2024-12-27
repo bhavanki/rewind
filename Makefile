@@ -7,6 +7,7 @@ fmt:
 	go fmt ./...
 
 internal/store/store_mock.go: internal/store/store.go
+	rm internal/store/store_mock.go
 	go generate ./internal/store
 
 .PHONY: lint

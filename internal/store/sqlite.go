@@ -1,7 +1,6 @@
 package store
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/bhavanki/rewind/pkg/model"
@@ -30,9 +29,26 @@ func NewSqliteStore(connString string) (*sqliteStore, error) {
 	}, nil
 }
 
+// for testing
+func (s sqliteStore) readEntity(ref model.EntityRef) (model.Entity, error) {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return model.Entity{}, fmt.Errorf("failed to begin transaction for read: %w", err)
+	}
+	defer tx.Commit()
+
+	entity, err := readEntity(ref, tx)
+	if err != nil {
+		return model.Entity{}, err
+	}
+
+	return entity, nil
+}
+
 var (
 	componentInsertStatement = `INSERT INTO component (entity_id, type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	componentSelectStatement = `SELECT type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of FROM component WHERE entity_id = ?`
+	componentUpdateStatement = `UPDATE component SET (type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE entity_id = ?`
 
 	apiInsertStatement = `INSERT INTO api (entity_id, type, lifecycle, owner, system, definition) VALUES (?, ?, ?, ?, ?, ?)`
 	apiSelectStatement = `SELECT type, lifecycle, owner, system, definition FROM api WHERE entity_id = ?`
@@ -45,8 +61,8 @@ var (
 )
 
 func (s sqliteStore) CreateComponent(c model.Component) (rc model.Component, err error) {
-	var tx *sql.Tx
-	tx, err = s.db.Begin()
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
 	if err != nil {
 		return model.Component{}, fmt.Errorf("failed to begin transaction for create: %w", err)
 	}
@@ -90,23 +106,35 @@ func (s sqliteStore) CreateComponent(c model.Component) (rc model.Component, err
 	return rc, nil
 }
 
-func (s sqliteStore) ReadComponent(ref model.EntityRef) (model.Component, error) {
-	entity, err := readEntity(ref, s.db)
+func (s sqliteStore) ReadComponent(ref model.EntityRef) (c model.Component, err error) {
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to begin transaction for read: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := readEntity(ref, tx)
 	if err != nil {
 		return model.Component{}, err
 	}
 
-	c := model.Component{
+	c = model.Component{
 		Entity: entity,
 	}
 
-	rows, err := s.db.Queryx(componentSelectStatement, entity.ID)
+	rows, err := tx.Queryx(componentSelectStatement, entity.ID)
 	if err != nil {
 		return model.Component{}, fmt.Errorf("failed to query for component: %w", err)
 	}
-	defer func() {
-		rows.Close()
-	}()
+	defer rows.Close()
 	if rows.Next() {
 		var componentType string
 		var lifecycle string
@@ -135,7 +163,56 @@ func (s sqliteStore) ReadComponent(ref model.EntityRef) (model.Component, error)
 		}
 	}
 
+	if err = tx.Commit(); err != nil {
+		return model.Component{}, fmt.Errorf("failed to commit transaction for read: %w", err)
+	}
 	return c, nil
+}
+
+func (s sqliteStore) UpdateComponent(c model.Component) (rc model.Component, err error) {
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to begin transaction for update: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := updateEntity(c.Entity, tx)
+	if err != nil {
+		return model.Component{}, err
+	}
+
+	rc = c
+	rc.Entity.ID = entity.ID
+
+	_, err = tx.Exec(
+		componentUpdateStatement,
+		c.Spec.Type,
+		c.Spec.Lifecycle,
+		c.Spec.Owner,
+		c.Spec.System,
+		c.Spec.SubcomponentOf,
+		model.MakeEntityRefs(c.Spec.ProvidesAPIs),
+		model.MakeEntityRefs(c.Spec.ConsumesAPIs),
+		model.MakeEntityRefs(c.Spec.DependsOn),
+		model.MakeEntityRefs(c.Spec.DependencyOf),
+		entity.ID,
+	)
+	if err != nil {
+		return model.Component{}, fmt.Errorf("failed to update component: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return model.Component{}, fmt.Errorf("failed to commit transaction for update: %w", err)
+	}
+	return rc, nil
 }
 
 func (s sqliteStore) DeleteComponent(ref model.EntityRef) (model.Component, error) {
@@ -155,8 +232,8 @@ func (s sqliteStore) DeleteComponent(ref model.EntityRef) (model.Component, erro
 // ---
 
 func (s sqliteStore) CreateAPI(a model.API) (ra model.API, err error) {
-	var tx *sql.Tx
-	tx, err = s.db.Begin()
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
 	if err != nil {
 		return model.API{}, fmt.Errorf("failed to begin transaction for create: %w", err)
 	}
@@ -196,23 +273,35 @@ func (s sqliteStore) CreateAPI(a model.API) (ra model.API, err error) {
 	return ra, nil
 }
 
-func (s sqliteStore) ReadAPI(ref model.EntityRef) (model.API, error) {
-	entity, err := readEntity(ref, s.db)
+func (s sqliteStore) ReadAPI(ref model.EntityRef) (a model.API, err error) {
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.API{}, fmt.Errorf("failed to begin transaction for read: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := readEntity(ref, tx)
 	if err != nil {
 		return model.API{}, err
 	}
 
-	a := model.API{
+	a = model.API{
 		Entity: entity,
 	}
 
-	rows, err := s.db.Queryx(apiSelectStatement, entity.ID)
+	rows, err := tx.Queryx(apiSelectStatement, entity.ID)
 	if err != nil {
 		return model.API{}, fmt.Errorf("failed to query for API: %w", err)
 	}
-	defer func() {
-		rows.Close()
-	}()
+	defer rows.Close()
 	if rows.Next() {
 		var apiType string
 		var lifecycle string
@@ -232,6 +321,9 @@ func (s sqliteStore) ReadAPI(ref model.EntityRef) (model.API, error) {
 		}
 	}
 
+	if err = tx.Commit(); err != nil {
+		return model.API{}, fmt.Errorf("failed to commit transaction for read: %w", err)
+	}
 	return a, nil
 }
 
@@ -252,8 +344,8 @@ func (s sqliteStore) DeleteAPI(ref model.EntityRef) (model.API, error) {
 // ---
 
 func (s sqliteStore) CreateUser(u model.User) (ru model.User, err error) {
-	var tx *sql.Tx
-	tx, err = s.db.Begin()
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
 	if err != nil {
 		return model.User{}, fmt.Errorf("failed to begin transaction for create: %w", err)
 	}
@@ -292,17 +384,31 @@ func (s sqliteStore) CreateUser(u model.User) (ru model.User, err error) {
 	return ru, nil
 }
 
-func (s sqliteStore) ReadUser(ref model.EntityRef) (model.User, error) {
-	entity, err := readEntity(ref, s.db)
+func (s sqliteStore) ReadUser(ref model.EntityRef) (u model.User, err error) {
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.User{}, fmt.Errorf("failed to begin transaction for read: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := readEntity(ref, tx)
 	if err != nil {
 		return model.User{}, err
 	}
 
-	u := model.User{
+	u = model.User{
 		Entity: entity,
 	}
 
-	rows, err := s.db.Queryx(userSelectStatement, entity.ID)
+	rows, err := tx.Queryx(userSelectStatement, entity.ID)
 	if err != nil {
 		return model.User{}, fmt.Errorf("failed to query for user: %w", err)
 	}
@@ -326,6 +432,9 @@ func (s sqliteStore) ReadUser(ref model.EntityRef) (model.User, error) {
 		}
 	}
 
+	if err = tx.Commit(); err != nil {
+		return model.User{}, fmt.Errorf("failed to commit transaction for read: %w", err)
+	}
 	return u, nil
 }
 
@@ -346,8 +455,8 @@ func (s sqliteStore) DeleteUser(ref model.EntityRef) (model.User, error) {
 // ---
 
 func (s sqliteStore) CreateGroup(g model.Group) (rg model.Group, err error) {
-	var tx *sql.Tx
-	tx, err = s.db.Begin()
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
 	if err != nil {
 		return model.Group{}, fmt.Errorf("failed to begin transaction for create: %w", err)
 	}
@@ -389,17 +498,31 @@ func (s sqliteStore) CreateGroup(g model.Group) (rg model.Group, err error) {
 	return rg, nil
 }
 
-func (s sqliteStore) ReadGroup(ref model.EntityRef) (model.Group, error) {
-	entity, err := readEntity(ref, s.db)
+func (s sqliteStore) ReadGroup(ref model.EntityRef) (g model.Group, err error) {
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.Group{}, fmt.Errorf("failed to begin transaction for read: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := readEntity(ref, tx)
 	if err != nil {
 		return model.Group{}, err
 	}
 
-	u := model.Group{
+	g = model.Group{
 		Entity: entity,
 	}
 
-	rows, err := s.db.Queryx(groupSelectStatement, entity.ID)
+	rows, err := tx.Queryx(groupSelectStatement, entity.ID)
 	if err != nil {
 		return model.Group{}, fmt.Errorf("failed to query for group: %w", err)
 	}
@@ -416,7 +539,7 @@ func (s sqliteStore) ReadGroup(ref model.EntityRef) (model.Group, error) {
 		if err != nil {
 			return model.Group{}, fmt.Errorf("failed to scan columns for group: %w", err)
 		}
-		u.Spec = model.GroupSpec{
+		g.Spec = model.GroupSpec{
 			Type: groupType,
 			Profile: model.GroupProfile{
 				DisplayName: displayName,
@@ -429,7 +552,10 @@ func (s sqliteStore) ReadGroup(ref model.EntityRef) (model.Group, error) {
 		}
 	}
 
-	return u, nil
+	if err = tx.Commit(); err != nil {
+		return model.Group{}, fmt.Errorf("failed to commit transaction for read: %w", err)
+	}
+	return g, nil
 }
 
 func (s sqliteStore) DeleteGroup(ref model.EntityRef) (model.Group, error) {

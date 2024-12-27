@@ -29,6 +29,59 @@ func TestCreateComponentAndReadComponent(t *testing.T) {
 	assert.Equal(t, c, r)
 }
 
+func TestUpdateComponent(t *testing.T) {
+	store := testStore(t)
+
+	c, err := store.CreateComponent(model.TestFullComponent)
+	assert.NoError(t, err)
+
+	c.Metadata.Title = "my-new-title"
+	c.Metadata.Description = "my-new-description"
+	c.Metadata.Labels = map[string]string{
+		"key0": "value0",
+		"key1": "value1a",
+	}
+	c.Metadata.Annotations = map[string]string{
+		"keya": "valuea1",
+	}
+	c.Metadata.Tags = []string{"tag0"}
+	c.Metadata.Links = []model.Link{
+		{
+			URL:   "http://example.com/url0",
+			Title: "link0",
+			Icon:  "icon0",
+			Type:  "linktype0",
+		},
+		{
+			URL:   "http://example.com/url1",
+			Title: "link1a",
+			Icon:  "icon1a",
+			Type:  "linktype1a",
+		},
+	}
+	c.Spec.Type = model.ComponentTypeLibrary
+	c.Spec.Lifecycle = model.ComponentLifecycleProduction
+	c.Spec.Owner = model.TestOwner2EntityRef
+	c.Spec.System = model.TestSystem2EntityRef
+	c.Spec.SubcomponentOf = model.TestComponent2EntityRef
+	c.Spec.ProvidesAPIs = []model.EntityRef{
+		model.TestAPI2EntityRef,
+	}
+	c.Spec.ConsumesAPIs = nil
+	c.Spec.DependsOn = []model.EntityRef{
+		model.TestResource2EntityRef,
+	}
+	c.Spec.DependencyOf = nil
+
+	u, err := store.UpdateComponent(c)
+	assert.NoError(t, err)
+	assert.Equal(t, c, u)
+
+	r, err := store.ReadComponent(model.TestFullComponent.EntityRef())
+	assert.NoError(t, err)
+	assert.Equal(t, c, r)
+}
+
 func TestDeleteComponent(t *testing.T) {
 	store := testStore(t)
 
@@ -41,11 +94,12 @@ func TestDeleteComponent(t *testing.T) {
 
 	assert.Equal(t, c, d)
 
-	_, err = readEntity(c.EntityRef(), store.db)
+	_, err = store.readEntity(c.EntityRef())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 
 	rows, err := store.db.Queryx(componentSelectStatement, id)
+	defer rows.Close()
 	assert.NoError(t, err)
 	assert.False(t, rows.Next())
 }
@@ -79,11 +133,12 @@ func TestDeleteAPI(t *testing.T) {
 
 	assert.Equal(t, a, d)
 
-	_, err = readEntity(a.EntityRef(), store.db)
+	_, err = store.readEntity(a.EntityRef())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 
 	rows, err := store.db.Queryx(apiSelectStatement, id)
+	defer rows.Close()
 	assert.NoError(t, err)
 	assert.False(t, rows.Next())
 }
@@ -117,11 +172,12 @@ func TestDeleteUser(t *testing.T) {
 
 	assert.Equal(t, u, d)
 
-	_, err = readEntity(u.EntityRef(), store.db)
+	_, err = store.readEntity(u.EntityRef())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 
 	rows, err := store.db.Queryx(userSelectStatement, id)
+	defer rows.Close()
 	assert.NoError(t, err)
 	assert.False(t, rows.Next())
 }
@@ -155,11 +211,12 @@ func TestDeleteGroup(t *testing.T) {
 
 	assert.Equal(t, g, d)
 
-	_, err = readEntity(g.EntityRef(), store.db)
+	_, err = store.readEntity(g.EntityRef())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 
 	rows, err := store.db.Queryx(groupSelectStatement, id)
+	defer rows.Close()
 	assert.NoError(t, err)
 	assert.False(t, rows.Next())
 }
