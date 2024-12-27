@@ -1,8 +1,19 @@
 package model
 
+const (
+	APITypeOpenAPI  = "openapi"
+	APITypeAsyncAPI = "asyncapi"
+	APITypeGraphQL  = "graphql"
+	APITypeGRPC     = "grpc"
+
+	APILifecycleExperimental = "experimental"
+	APILifecycleProduction   = "production"
+	APILifecycleDeprecated   = "deprecated"
+)
+
 type API struct {
-	Entity
-	Spec APISpec `yaml:"spec"`
+	Entity `yaml:"entity,inline"`
+	Spec   APISpec `yaml:"spec"`
 }
 
 type APISpec struct {

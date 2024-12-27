@@ -1,7 +1,6 @@
 package store
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/bhavanki/rewind/pkg/model"
@@ -53,12 +52,15 @@ var (
 
 	apiInsertStatement = `INSERT INTO api (entity_id, type, lifecycle, owner, system, definition) VALUES (?, ?, ?, ?, ?, ?)`
 	apiSelectStatement = `SELECT type, lifecycle, owner, system, definition FROM api WHERE entity_id = ?`
+	apiUpdateStatement = `UPDATE api SET (type, lifecycle, owner, system, definition) = (?, ?, ?, ?, ?) WHERE entity_id = ?`
 
 	userInsertStatement = `INSERT INTO user (entity_id, display_name, email, picture, member_of) VALUES (?, ?, ?, ?, ?)`
 	userSelectStatement = `SELECT display_name, email, picture, member_of FROM user WHERE entity_id = ?`
+	userUpdateStatement = `UPDATE user SET (display_name, email, picture, member_of) = (?, ?, ?, ?) WHERE entity_id = ?`
 
 	groupInsertStatement = `INSERT INTO grp (entity_id, type, display_name, email, picture, parent, children, members) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	groupSelectStatement = `SELECT type, display_name, email, picture, parent, children, members FROM grp WHERE entity_id = ?`
+	groupUpdateStatement = `UPDATE grp SET (type, display_name, email, picture, parent, children, members) = (?, ?, ?, ?, ?, ?, ?) WHERE entity_id = ?`
 )
 
 func (s sqliteStore) CreateComponent(c model.Component) (rc model.Component, err error) {
@@ -329,7 +331,45 @@ func (s sqliteStore) ReadAPI(ref model.EntityRef) (a model.API, err error) {
 }
 
 func (s sqliteStore) UpdateAPI(a model.API) (ra model.API, err error) {
-	return model.API{}, errors.New("not yet implemented")
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.API{}, fmt.Errorf("failed to begin transaction for update: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := updateEntity(a.Entity, tx)
+	if err != nil {
+		return model.API{}, err
+	}
+
+	ra = a
+	ra.Entity.ID = entity.ID
+
+	_, err = tx.Exec(
+		apiUpdateStatement,
+		a.Spec.Type,
+		a.Spec.Lifecycle,
+		a.Spec.Owner,
+		a.Spec.System,
+		a.Spec.Definition,
+		entity.ID,
+	)
+	if err != nil {
+		return model.API{}, fmt.Errorf("failed to update API: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return model.API{}, fmt.Errorf("failed to commit transaction for update: %w", err)
+	}
+	return ra, nil
 }
 
 func (s sqliteStore) DeleteAPI(ref model.EntityRef) (model.API, error) {
@@ -444,7 +484,44 @@ func (s sqliteStore) ReadUser(ref model.EntityRef) (u model.User, err error) {
 }
 
 func (s sqliteStore) UpdateUser(u model.User) (ru model.User, err error) {
-	return model.User{}, errors.New("not yet implemented")
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.User{}, fmt.Errorf("failed to begin transaction for update: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := updateEntity(u.Entity, tx)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	ru = u
+	ru.Entity.ID = entity.ID
+
+	_, err = tx.Exec(
+		userUpdateStatement,
+		u.Spec.Profile.DisplayName,
+		u.Spec.Profile.Email,
+		u.Spec.Profile.Picture,
+		model.MakeEntityRefs(u.Spec.MemberOf),
+		entity.ID,
+	)
+	if err != nil {
+		return model.User{}, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return model.User{}, fmt.Errorf("failed to commit transaction for update: %w", err)
+	}
+	return ru, nil
 }
 
 func (s sqliteStore) DeleteUser(ref model.EntityRef) (model.User, error) {
@@ -568,7 +645,47 @@ func (s sqliteStore) ReadGroup(ref model.EntityRef) (g model.Group, err error) {
 }
 
 func (s sqliteStore) UpdateGroup(g model.Group) (rg model.Group, err error) {
-	return model.Group{}, errors.New("not yet implemented")
+	var tx *sqlx.Tx
+	tx, err = s.db.Beginx()
+	if err != nil {
+		return model.Group{}, fmt.Errorf("failed to begin transaction for update: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			rerr := tx.Rollback()
+			if rerr != nil {
+				err = fmt.Errorf("failed to rollback transaction (%s): %w", rerr, err)
+			}
+		}
+	}()
+
+	entity, err := updateEntity(g.Entity, tx)
+	if err != nil {
+		return model.Group{}, err
+	}
+
+	rg = g
+	rg.Entity.ID = entity.ID
+
+	_, err = tx.Exec(
+		groupUpdateStatement,
+		g.Spec.Type,
+		g.Spec.Profile.DisplayName,
+		g.Spec.Profile.Email,
+		g.Spec.Profile.Picture,
+		g.Spec.Parent,
+		model.MakeEntityRefs(g.Spec.Children),
+		model.MakeEntityRefs(g.Spec.Members),
+		entity.ID,
+	)
+	if err != nil {
+		return model.Group{}, fmt.Errorf("failed to update group: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return model.Group{}, fmt.Errorf("failed to commit transaction for update: %w", err)
+	}
+	return rg, nil
 }
 
 func (s sqliteStore) DeleteGroup(ref model.EntityRef) (model.Group, error) {

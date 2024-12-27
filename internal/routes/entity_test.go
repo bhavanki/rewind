@@ -149,6 +149,29 @@ func TestReadEntity_API(t *testing.T) {
 	assert.Equal(t, model.TestFullAPI, api)
 }
 
+func TestUpdateEntity_API(t *testing.T) {
+	r := gin.Default()
+	var api model.API
+	s := &store.StoreMock{
+		UpdateAPIFunc: func(a model.API) (model.API, error) {
+			api = a
+			return a, nil
+		},
+	}
+	SetupRoutes(r, s)
+
+	w := httptest.NewRecorder()
+	apiYAML, err := yaml.Marshal(model.TestFullAPI)
+	require.NoError(t, err)
+	req, err := http.NewRequest("PUT", "/api/my-namespace/my-service", strings.NewReader(string(apiYAML)))
+	require.NoError(t, err)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	assert.Equal(t, model.TestFullAPI, api)
+}
+
 func TestDeleteEntity_API(t *testing.T) {
 	r := gin.Default()
 	s := &store.StoreMock{
@@ -216,6 +239,29 @@ func TestReadEntity_User(t *testing.T) {
 	assert.Equal(t, model.TestFullUser, user)
 }
 
+func TestUpdateEntity_User(t *testing.T) {
+	r := gin.Default()
+	var user model.User
+	s := &store.StoreMock{
+		UpdateUserFunc: func(u model.User) (model.User, error) {
+			user = u
+			return u, nil
+		},
+	}
+	SetupRoutes(r, s)
+
+	w := httptest.NewRecorder()
+	userYAML, err := yaml.Marshal(model.TestFullUser)
+	require.NoError(t, err)
+	req, err := http.NewRequest("PUT", "/user/my-namespace/my-service", strings.NewReader(string(userYAML)))
+	require.NoError(t, err)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusAccepted, w.Code)
+	assert.Equal(t, model.TestFullUser, user)
+}
+
 func TestDeleteEntity_User(t *testing.T) {
 	r := gin.Default()
 	s := &store.StoreMock{
@@ -280,6 +326,29 @@ func TestReadEntity_Group(t *testing.T) {
 	var group model.Group
 	err = yaml.Unmarshal(w.Body.Bytes(), &group)
 	assert.NoError(t, err)
+	assert.Equal(t, model.TestFullGroup, group)
+}
+
+func TestUpdateEntity_Group(t *testing.T) {
+	r := gin.Default()
+	var group model.Group
+	s := &store.StoreMock{
+		UpdateGroupFunc: func(g model.Group) (model.Group, error) {
+			group = g
+			return g, nil
+		},
+	}
+	SetupRoutes(r, s)
+
+	w := httptest.NewRecorder()
+	groupYAML, err := yaml.Marshal(model.TestFullGroup)
+	require.NoError(t, err)
+	req, err := http.NewRequest("PUT", "/group/my-namespace/my-service", strings.NewReader(string(groupYAML)))
+	require.NoError(t, err)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusAccepted, w.Code)
 	assert.Equal(t, model.TestFullGroup, group)
 }
 

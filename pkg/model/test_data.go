@@ -41,10 +41,20 @@ var (
 		Namespace: "default",
 		Name:      "api2",
 	}
+	TestUser2EntityRef = EntityRef{
+		Kind:      KindUser,
+		Namespace: "default",
+		Name:      "user2",
+	}
 	TestGroupEntityRef = EntityRef{
 		Kind:      KindGroup,
 		Namespace: "default",
 		Name:      "group",
+	}
+	TestGroup2EntityRef = EntityRef{
+		Kind:      KindGroup,
+		Namespace: "default",
+		Name:      "group2",
 	}
 	TestResource1EntityRef = EntityRef{
 		Kind:      KindResource,
@@ -117,8 +127,8 @@ var (
 	TestFullAPI = API{
 		Entity: TestFullEntity,
 		Spec: APISpec{
-			Type:       "openapi",
-			Lifecycle:  "experimental",
+			Type:       APITypeOpenAPI,
+			Lifecycle:  APILifecycleExperimental,
 			Owner:      TestOwnerEntityRef,
 			System:     TestSystemEntityRef,
 			Definition: "definition",

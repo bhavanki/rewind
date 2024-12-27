@@ -121,6 +121,28 @@ func TestCreateAPIAndReadAPI(t *testing.T) {
 	assert.Equal(t, a, r)
 }
 
+func TestUpdateAPI(t *testing.T) {
+	store := testStore(t)
+
+	a, err := store.CreateAPI(model.TestFullAPI)
+	assert.NoError(t, err)
+
+	// metadata updates tested for component
+	a.Spec.Type = model.APITypeGRPC
+	a.Spec.Lifecycle = model.APILifecycleProduction
+	a.Spec.Owner = model.TestOwner2EntityRef
+	a.Spec.System = model.TestSystem2EntityRef
+	a.Spec.Definition = "my-new-definition"
+
+	u, err := store.UpdateAPI(a)
+	assert.NoError(t, err)
+	assert.Equal(t, a, u)
+
+	r, err := store.ReadAPI(model.TestFullAPI.EntityRef())
+	assert.NoError(t, err)
+	assert.Equal(t, a, r)
+}
+
 func TestDeleteAPI(t *testing.T) {
 	store := testStore(t)
 
@@ -160,6 +182,29 @@ func TestCreateUserAndReadUser(t *testing.T) {
 	assert.Equal(t, u, r)
 }
 
+func TestUpdateUser(t *testing.T) {
+	store := testStore(t)
+
+	u, err := store.CreateUser(model.TestFullUser)
+	assert.NoError(t, err)
+
+	// metadata updates tested for component
+	u.Spec.Profile.DisplayName = "new-displayName"
+	u.Spec.Profile.Email = "new-email"
+	u.Spec.Profile.Picture = "new-picture"
+	u.Spec.MemberOf = []model.EntityRef{
+		model.TestGroup2EntityRef,
+	}
+
+	uu, err := store.UpdateUser(u)
+	assert.NoError(t, err)
+	assert.Equal(t, u, uu)
+
+	r, err := store.ReadUser(model.TestFullUser.EntityRef())
+	assert.NoError(t, err)
+	assert.Equal(t, u, r)
+}
+
 func TestDeleteUser(t *testing.T) {
 	store := testStore(t)
 
@@ -196,6 +241,34 @@ func TestCreateGroupAndReadGroup(t *testing.T) {
 	r, err := store.ReadGroup(model.TestFullGroup.EntityRef())
 	assert.NoError(t, err)
 
+	assert.Equal(t, g, r)
+}
+
+func TestUpdateGroup(t *testing.T) {
+	store := testStore(t)
+
+	g, err := store.CreateGroup(model.TestFullGroup)
+	assert.NoError(t, err)
+
+	// metadata updates tested for component
+	g.Spec.Type = "business-unit"
+	g.Spec.Profile.DisplayName = "new-displayName"
+	g.Spec.Profile.Email = "new-email"
+	g.Spec.Profile.Picture = "new-picture"
+	g.Spec.Parent = model.TestGroup2EntityRef
+	g.Spec.Children = []model.EntityRef{
+		model.TestGroupEntityRef,
+	}
+	g.Spec.Members = []model.EntityRef{
+		model.TestUser2EntityRef,
+	}
+
+	u, err := store.UpdateGroup(g)
+	assert.NoError(t, err)
+	assert.Equal(t, g, u)
+
+	r, err := store.ReadGroup(model.TestFullGroup.EntityRef())
+	assert.NoError(t, err)
 	assert.Equal(t, g, r)
 }
 
