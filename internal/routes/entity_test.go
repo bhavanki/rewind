@@ -28,7 +28,7 @@ func TestCreateEntity_Component(t *testing.T) {
 	w := httptest.NewRecorder()
 	componentYAML, err := yaml.Marshal(model.TestFullComponent)
 	require.NoError(t, err)
-	req, err := http.NewRequest("POST", "/component/my-namespace/my-service", strings.NewReader(string(componentYAML)))
+	req, err := http.NewRequest("POST", "/api/v1/component/my-namespace/my-service", strings.NewReader(string(componentYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -47,7 +47,7 @@ func TestReadEntity_Component(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/component/my-namespace/my-service", nil)
+	req, err := http.NewRequest("GET", "/api/v1/component/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -73,7 +73,7 @@ func TestUpdateEntity_Component(t *testing.T) {
 	w := httptest.NewRecorder()
 	componentYAML, err := yaml.Marshal(model.TestFullComponent)
 	require.NoError(t, err)
-	req, err := http.NewRequest("PUT", "/component/my-namespace/my-service", strings.NewReader(string(componentYAML)))
+	req, err := http.NewRequest("PUT", "/api/v1/component/my-namespace/my-service", strings.NewReader(string(componentYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -92,7 +92,7 @@ func TestDeleteEntity_Component(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("DELETE", "/component/my-namespace/my-service", nil)
+	req, err := http.NewRequest("DELETE", "/api/v1/component/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -118,7 +118,7 @@ func TestCreateEntity_API(t *testing.T) {
 	w := httptest.NewRecorder()
 	apiYAML, err := yaml.Marshal(model.TestFullAPI)
 	require.NoError(t, err)
-	req, err := http.NewRequest("POST", "/api/my-namespace/my-service", strings.NewReader(string(apiYAML)))
+	req, err := http.NewRequest("POST", "/api/v1/api/my-namespace/my-service", strings.NewReader(string(apiYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -137,7 +137,7 @@ func TestReadEntity_API(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/api/my-namespace/my-service", nil)
+	req, err := http.NewRequest("GET", "/api/v1/api/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -163,7 +163,7 @@ func TestUpdateEntity_API(t *testing.T) {
 	w := httptest.NewRecorder()
 	apiYAML, err := yaml.Marshal(model.TestFullAPI)
 	require.NoError(t, err)
-	req, err := http.NewRequest("PUT", "/api/my-namespace/my-service", strings.NewReader(string(apiYAML)))
+	req, err := http.NewRequest("PUT", "/api/v1/api/my-namespace/my-service", strings.NewReader(string(apiYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -182,7 +182,7 @@ func TestDeleteEntity_API(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("DELETE", "/api/my-namespace/my-service", nil)
+	req, err := http.NewRequest("DELETE", "/api/v1/api/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -208,7 +208,7 @@ func TestCreateEntity_User(t *testing.T) {
 	w := httptest.NewRecorder()
 	userYAML, err := yaml.Marshal(model.TestFullUser)
 	require.NoError(t, err)
-	req, err := http.NewRequest("POST", "/user/my-namespace/my-service", strings.NewReader(string(userYAML)))
+	req, err := http.NewRequest("POST", "/api/v1/user/my-namespace/my-service", strings.NewReader(string(userYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -227,7 +227,7 @@ func TestReadEntity_User(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/user/my-namespace/my-service", nil)
+	req, err := http.NewRequest("GET", "/api/v1/user/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -253,7 +253,7 @@ func TestUpdateEntity_User(t *testing.T) {
 	w := httptest.NewRecorder()
 	userYAML, err := yaml.Marshal(model.TestFullUser)
 	require.NoError(t, err)
-	req, err := http.NewRequest("PUT", "/user/my-namespace/my-service", strings.NewReader(string(userYAML)))
+	req, err := http.NewRequest("PUT", "/api/v1/user/my-namespace/my-service", strings.NewReader(string(userYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -272,7 +272,7 @@ func TestDeleteEntity_User(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("DELETE", "/user/my-namespace/my-service", nil)
+	req, err := http.NewRequest("DELETE", "/api/v1/user/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -298,7 +298,7 @@ func TestCreateEntity_Group(t *testing.T) {
 	w := httptest.NewRecorder()
 	groupYAML, err := yaml.Marshal(model.TestFullGroup)
 	require.NoError(t, err)
-	req, err := http.NewRequest("POST", "/group/my-namespace/my-service", strings.NewReader(string(groupYAML)))
+	req, err := http.NewRequest("POST", "/api/v1/group/my-namespace/my-service", strings.NewReader(string(groupYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -317,7 +317,7 @@ func TestReadEntity_Group(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/group/my-namespace/my-service", nil)
+	req, err := http.NewRequest("GET", "/api/v1/group/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -343,7 +343,7 @@ func TestUpdateEntity_Group(t *testing.T) {
 	w := httptest.NewRecorder()
 	groupYAML, err := yaml.Marshal(model.TestFullGroup)
 	require.NoError(t, err)
-	req, err := http.NewRequest("PUT", "/group/my-namespace/my-service", strings.NewReader(string(groupYAML)))
+	req, err := http.NewRequest("PUT", "/api/v1/group/my-namespace/my-service", strings.NewReader(string(groupYAML)))
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)
@@ -362,7 +362,7 @@ func TestDeleteEntity_Group(t *testing.T) {
 	SetupRoutes(r, s)
 
 	w := httptest.NewRecorder()
-	req, err := http.NewRequest("DELETE", "/group/my-namespace/my-service", nil)
+	req, err := http.NewRequest("DELETE", "/api/v1/group/my-namespace/my-service", nil)
 	require.NoError(t, err)
 
 	r.ServeHTTP(w, req)

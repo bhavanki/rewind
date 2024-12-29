@@ -8,16 +8,16 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine, store store.Store) {
-	r.GET("/ping", func(c *gin.Context) {
+	r.GET("/api/v1/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
 		})
 	})
 
-	r.GET("/:kind/:namespace/:name", withStore(store, ReadEntity))
-	r.POST("/:kind/:namespace/:name", withStore(store, CreateEntity))
-	r.PUT("/:kind/:namespace/:name", withStore(store, UpdateEntity))
-	r.DELETE("/:kind/:namespace/:name", withStore(store, DeleteEntity))
+	r.GET("/api/v1/:kind/:namespace/:name", withStore(store, ReadEntity))
+	r.POST("/api/v1/:kind/:namespace/:name", withStore(store, CreateEntity))
+	r.PUT("/api/v1/:kind/:namespace/:name", withStore(store, UpdateEntity))
+	r.DELETE("/api/v1/:kind/:namespace/:name", withStore(store, DeleteEntity))
 }
 
 type storeHandlerFunc func(*gin.Context, store.Store)
