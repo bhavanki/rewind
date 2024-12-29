@@ -42,6 +42,9 @@ var _ Store = &StoreMock{}
 //			DeleteUserFunc: func(ref model.EntityRef) (model.User, error) {
 //				panic("mock out the DeleteUser method")
 //			},
+//			ListComponentsFunc: func(filters []Filter, ordering Ordering, pagination Pagination) ([]model.EntityRef, Pagination, error) {
+//				panic("mock out the ListComponents method")
+//			},
 //			ReadAPIFunc: func(ref model.EntityRef) (model.API, error) {
 //				panic("mock out the ReadAPI method")
 //			},
@@ -96,6 +99,9 @@ type StoreMock struct {
 
 	// DeleteUserFunc mocks the DeleteUser method.
 	DeleteUserFunc func(ref model.EntityRef) (model.User, error)
+
+	// ListComponentsFunc mocks the ListComponents method.
+	ListComponentsFunc func(filters []Filter, ordering Ordering, pagination Pagination) ([]model.EntityRef, Pagination, error)
 
 	// ReadAPIFunc mocks the ReadAPI method.
 	ReadAPIFunc func(ref model.EntityRef) (model.API, error)
@@ -163,6 +169,15 @@ type StoreMock struct {
 			// Ref is the ref argument value.
 			Ref model.EntityRef
 		}
+		// ListComponents holds details about calls to the ListComponents method.
+		ListComponents []struct {
+			// Filters is the filters argument value.
+			Filters []Filter
+			// Ordering is the ordering argument value.
+			Ordering Ordering
+			// Pagination is the pagination argument value.
+			Pagination Pagination
+		}
 		// ReadAPI holds details about calls to the ReadAPI method.
 		ReadAPI []struct {
 			// Ref is the ref argument value.
@@ -212,6 +227,7 @@ type StoreMock struct {
 	lockDeleteComponent sync.RWMutex
 	lockDeleteGroup     sync.RWMutex
 	lockDeleteUser      sync.RWMutex
+	lockListComponents  sync.RWMutex
 	lockReadAPI         sync.RWMutex
 	lockReadComponent   sync.RWMutex
 	lockReadGroup       sync.RWMutex
@@ -475,6 +491,46 @@ func (mock *StoreMock) DeleteUserCalls() []struct {
 	mock.lockDeleteUser.RLock()
 	calls = mock.calls.DeleteUser
 	mock.lockDeleteUser.RUnlock()
+	return calls
+}
+
+// ListComponents calls ListComponentsFunc.
+func (mock *StoreMock) ListComponents(filters []Filter, ordering Ordering, pagination Pagination) ([]model.EntityRef, Pagination, error) {
+	if mock.ListComponentsFunc == nil {
+		panic("StoreMock.ListComponentsFunc: method is nil but Store.ListComponents was just called")
+	}
+	callInfo := struct {
+		Filters    []Filter
+		Ordering   Ordering
+		Pagination Pagination
+	}{
+		Filters:    filters,
+		Ordering:   ordering,
+		Pagination: pagination,
+	}
+	mock.lockListComponents.Lock()
+	mock.calls.ListComponents = append(mock.calls.ListComponents, callInfo)
+	mock.lockListComponents.Unlock()
+	return mock.ListComponentsFunc(filters, ordering, pagination)
+}
+
+// ListComponentsCalls gets all the calls that were made to ListComponents.
+// Check the length with:
+//
+//	len(mockedStore.ListComponentsCalls())
+func (mock *StoreMock) ListComponentsCalls() []struct {
+	Filters    []Filter
+	Ordering   Ordering
+	Pagination Pagination
+} {
+	var calls []struct {
+		Filters    []Filter
+		Ordering   Ordering
+		Pagination Pagination
+	}
+	mock.lockListComponents.RLock()
+	calls = mock.calls.ListComponents
+	mock.lockListComponents.RUnlock()
 	return calls
 }
 

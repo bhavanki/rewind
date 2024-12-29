@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/bhavanki/rewind/internal/store"
 	"github.com/bhavanki/rewind/pkg/model"
@@ -232,4 +233,97 @@ func DeleteEntity(c *gin.Context, store store.Store) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("unsupported kind %s", kind)})
 		return
 	}
+}
+
+func ListEntities(c *gin.Context, st store.Store) {
+	filters, ordering, pagination, err := processListParams(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad list parameter: %s", err)})
+		return
+	}
+
+	var refs []model.EntityRef
+	var nextPagination store.Pagination
+	kind := c.Param("kind")
+	switch kind {
+	case model.KindComponent:
+		refs, nextPagination, err = st.ListComponents(filters, ordering, pagination)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("unsupported kind %s", kind)})
+		return
+	}
+	if err != nil {
+		slog.Error("failed to list entities", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list entities"})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.SearchResults{
+		Results:    refs,
+		Limit:      nextPagination.Limit,
+		NextOffset: nextPagination.Offset,
+	})
+}
+
+const (
+	defaultLimit = "50"
+)
+
+func processListParams(c *gin.Context) ([]store.Filter, store.Ordering, store.Pagination, error) {
+	filters := []store.Filter{}
+	namespace := c.Query("namespace")
+	if namespace != "" {
+		filters = append(filters, store.Filter{
+			Key:   "entity.namespace",
+			Value: namespace,
+		})
+	}
+	name := c.Query("name")
+	if name != "" {
+		filters = append(filters, store.Filter{
+			Key:   "entity.name",
+			Value: name,
+		})
+	}
+
+	ordering := store.Ordering{}
+	pagination := store.Pagination{}
+
+	orderBy := c.Query("orderBy")
+	if orderBy != "" {
+		switch orderBy {
+		case "namespace":
+			ordering.OrderBy = store.OrderByNamespace
+		case "name":
+			ordering.OrderBy = store.OrderByName
+		default:
+			return filters, ordering, pagination, fmt.Errorf("invalid orderBy %s", orderBy)
+		}
+		descending := c.Query("descending")
+		if descending == "true" {
+			ordering.Descending = true
+		}
+	}
+
+	limit := c.Query("limit")
+	if limit == "" {
+		limit = defaultLimit
+	}
+	if limit != "" {
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil || limitInt <= 0 {
+			return filters, ordering, pagination, fmt.Errorf("invalid limit %s", limit)
+		}
+		pagination.Limit = limitInt
+		offset := c.Query("offset")
+		if offset != "" {
+			offsetInt, err := strconv.Atoi(offset)
+			if err != nil || offsetInt < 0 {
+				return filters, ordering, pagination, fmt.Errorf("invalid offset %s", offset)
+			}
+			pagination.Offset = offsetInt
+		}
+	}
+
+	return filters, ordering, pagination, nil
 }

@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -102,6 +104,109 @@ func TestDeleteEntity_Component(t *testing.T) {
 	err = yaml.Unmarshal(w.Body.Bytes(), &component)
 	assert.NoError(t, err)
 	assert.Equal(t, model.TestFullComponent, component)
+}
+
+func TestListEntity_Component(t *testing.T) {
+	refs := []model.EntityRef{
+		model.TestComponentEntityRef,
+		model.TestComponent2EntityRef,
+	}
+	r := gin.Default()
+	s := &store.StoreMock{
+		ListComponentsFunc: func(filters []store.Filter, ordering store.Ordering, pagination store.Pagination) ([]model.EntityRef, store.Pagination, error) {
+			return refs, store.Pagination{
+				Limit:  50,
+				Offset: 2,
+			}, nil
+		},
+	}
+	SetupRoutes(r, s)
+
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/api/v1/component", nil)
+	require.NoError(t, err)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var results model.SearchResults
+	err = json.Unmarshal(w.Body.Bytes(), &results)
+	assert.NoError(t, err)
+	assert.Equal(t, refs, results.Results)
+	assert.Equal(t, 50, results.Limit)
+	assert.Equal(t, 2, results.NextOffset)
+
+	calls := s.ListComponentsCalls()
+	assert.Equal(t, 1, len(calls))
+	assert.Empty(t, calls[0].Filters)
+	assert.Equal(t, store.Ordering{}, calls[0].Ordering)
+	assert.Equal(t, store.Pagination{
+		Limit:  50,
+		Offset: 0,
+	}, calls[0].Pagination)
+}
+
+func TestListEntity_Component_Params(t *testing.T) {
+	refs := []model.EntityRef{
+		model.TestComponentEntityRef,
+	}
+	r := gin.Default()
+	s := &store.StoreMock{
+		ListComponentsFunc: func(filters []store.Filter, ordering store.Ordering, pagination store.Pagination) ([]model.EntityRef, store.Pagination, error) {
+			return refs, store.Pagination{
+				Limit:  20,
+				Offset: 2,
+			}, nil
+		},
+	}
+	SetupRoutes(r, s)
+
+	w := httptest.NewRecorder()
+	params := url.Values{
+		"namespace":  []string{"default"},
+		"name":       []string{"component1"},
+		"orderBy":    []string{"namespace"},
+		"descending": []string{"true"},
+		"limit":      []string{"20"},
+		"offset":     []string{"1"},
+	}
+	url := url.URL{
+		Path:     "/api/v1/component",
+		RawQuery: params.Encode(),
+	}
+	req, err := http.NewRequest("GET", url.String(), nil)
+	require.NoError(t, err)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var results model.SearchResults
+	err = json.Unmarshal(w.Body.Bytes(), &results)
+	assert.NoError(t, err)
+	assert.Equal(t, refs, results.Results)
+	assert.Equal(t, 20, results.Limit)
+	assert.Equal(t, 2, results.NextOffset)
+
+	calls := s.ListComponentsCalls()
+	assert.Equal(t, 1, len(calls))
+	assert.Equal(t, []store.Filter{
+		{
+			Key:   "entity.namespace",
+			Value: "default",
+		},
+		{
+			Key:   "entity.name",
+			Value: "component1",
+		},
+	}, calls[0].Filters)
+	assert.Equal(t, store.Ordering{
+		OrderBy:    "entity.namespace",
+		Descending: true,
+	}, calls[0].Ordering)
+	assert.Equal(t, store.Pagination{
+		Limit:  20,
+		Offset: 1,
+	}, calls[0].Pagination)
 }
 
 func TestCreateEntity_API(t *testing.T) {

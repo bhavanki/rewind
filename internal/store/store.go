@@ -11,6 +11,7 @@ type Store interface {
 	ReadComponent(ref model.EntityRef) (model.Component, error)
 	UpdateComponent(c model.Component) (model.Component, error)
 	DeleteComponent(ref model.EntityRef) (model.Component, error)
+	ListComponents(filters []Filter, ordering Ordering, pagination Pagination) ([]model.EntityRef, Pagination, error)
 
 	CreateAPI(a model.API) (model.API, error)
 	ReadAPI(ref model.EntityRef) (model.API, error)
@@ -26,4 +27,26 @@ type Store interface {
 	ReadGroup(ref model.EntityRef) (model.Group, error)
 	UpdateGroup(g model.Group) (model.Group, error)
 	DeleteGroup(ref model.EntityRef) (model.Group, error)
+}
+
+type Filter struct {
+	Key   string
+	Value string
+}
+
+type OrderingField string
+
+const (
+	OrderByNamespace = OrderingField("entity.namespace")
+	OrderByName      = OrderingField("entity.name")
+)
+
+type Ordering struct {
+	OrderBy    OrderingField
+	Descending bool
+}
+
+type Pagination struct {
+	Limit  int
+	Offset int
 }

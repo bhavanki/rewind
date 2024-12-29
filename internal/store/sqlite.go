@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bhavanki/rewind/pkg/model"
 	"github.com/jmoiron/sqlx"
@@ -49,6 +50,8 @@ var (
 	componentInsertStatement = `INSERT INTO component (entity_id, type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	componentSelectStatement = `SELECT type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of FROM component WHERE entity_id = ?`
 	componentUpdateStatement = `UPDATE component SET (type, lifecycle, owner, system, subcomponent_of, provides_apis, consumes_apis, depends_on, dependency_of) = (?, ?, ?, ?, ?, ?, ?, ?, ?) WHERE entity_id = ?`
+
+	componentListStatementPrefix = `SELECT namespace, name FROM entity INNER JOIN component ON entity.id = component.entity_id WHERE entity.kind = ?`
 
 	apiInsertStatement = `INSERT INTO api (entity_id, type, lifecycle, owner, system, definition) VALUES (?, ?, ?, ?, ?, ?)`
 	apiSelectStatement = `SELECT type, lifecycle, owner, system, definition FROM api WHERE entity_id = ?`
@@ -230,6 +233,68 @@ func (s sqliteStore) DeleteComponent(ref model.EntityRef) (model.Component, erro
 	}
 
 	return component, nil
+}
+
+func (s sqliteStore) ListComponents(filters []Filter, ordering Ordering, pagination Pagination) ([]model.EntityRef, Pagination, error) {
+	whereClauses := []string{}
+	queryParameters := []any{
+		model.KindComponent,
+	}
+	for _, filter := range filters {
+		whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", filter.Key))
+		queryParameters = append(queryParameters, filter.Value)
+	}
+
+	listStatement := componentListStatementPrefix
+	if len(whereClauses) > 0 {
+		listStatement += " AND "
+		listStatement += strings.Join(whereClauses, " AND ")
+	}
+
+	if ordering.OrderBy != "" {
+		orderByClause := " ORDER BY " + string(ordering.OrderBy)
+		if ordering.Descending {
+			orderByClause += " DESC"
+		} else {
+			orderByClause += " ASC"
+		}
+		listStatement += orderByClause
+	}
+
+	if pagination.Limit > 0 {
+		limitClause := fmt.Sprintf(" LIMIT %d", pagination.Limit)
+		if pagination.Offset > 0 {
+			limitClause += fmt.Sprintf(" OFFSET %d", pagination.Offset)
+		}
+		listStatement += limitClause
+	}
+
+	rows, err := s.db.Queryx(listStatement, queryParameters...)
+	if err != nil {
+		return nil, Pagination{}, fmt.Errorf("failed to list components: %w", err)
+	}
+	defer rows.Close()
+	results := []model.EntityRef{}
+	nextOffset := pagination.Offset
+	for rows.Next() {
+		var namespace string
+		var name string
+		err = rows.Scan(&namespace, &name)
+		if err != nil {
+			return nil, Pagination{}, fmt.Errorf("failed to scan columns for component: %w", err)
+		}
+		results = append(results, model.EntityRef{
+			Kind:      model.KindComponent,
+			Namespace: namespace,
+			Name:      name,
+		})
+		nextOffset++
+	}
+
+	return results, Pagination{
+		Limit:  pagination.Limit,
+		Offset: nextOffset,
+	}, nil
 }
 
 // ---

@@ -104,6 +104,235 @@ func TestDeleteComponent(t *testing.T) {
 	assert.False(t, rows.Next())
 }
 
+func TestListComponents(t *testing.T) {
+	component1 := model.Component{
+		Entity: model.Entity{
+			APIVersion: "backstage.io/v1alpha1",
+			Kind:       model.KindComponent,
+			Metadata: model.Metadata{
+				Namespace: "default",
+				Name:      "component1",
+			},
+		},
+		Spec: model.ComponentSpec{
+			Type:      model.ComponentTypeService,
+			Lifecycle: model.ComponentLifecycleExperimental,
+			Owner:     model.TestFullUser.EntityRef(),
+		},
+	}
+
+	component2 := component1
+	component2.Entity.Metadata.Namespace = "ns1"
+	component2.Entity.Metadata.Name = "component2"
+	component2.Spec.Type = model.ComponentTypeLibrary
+
+	component3 := component1
+	component3.Entity.Metadata.Namespace = "ns1"
+	component3.Entity.Metadata.Name = "component3"
+	component3.Spec.Type = model.ComponentTypeWebsite
+
+	type testCase struct {
+		components         []model.Component
+		filters            []Filter
+		ordering           Ordering
+		pagination         Pagination
+		expectedEntityRefs []model.EntityRef
+		description        string
+	}
+	tcs := []testCase{
+		{
+			components:         nil,
+			expectedEntityRefs: nil,
+			description:        "empty",
+		},
+		{
+			components: []model.Component{
+				component1,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+			},
+			description: "single hit, no filters",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+				component2.EntityRef(),
+			},
+			description: "multiple hits, no filters",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			filters: []Filter{
+				{
+					Key:   "entity.namespace",
+					Value: "ns1",
+				},
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component2.EntityRef(),
+			},
+			description: "filter on namespace",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			filters: []Filter{
+				{
+					Key:   "entity.name",
+					Value: "component1",
+				},
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+			},
+			description: "filter on name",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			filters: []Filter{
+				{
+					Key:   "entity.namespace",
+					Value: "default",
+				},
+				{
+					Key:   "entity.name",
+					Value: "component1",
+				},
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+			},
+			description: "filter on namespace and name",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			filters: []Filter{
+				{
+					Key:   "entity.namespace",
+					Value: "ns1",
+				},
+				{
+					Key:   "entity.name",
+					Value: "component1",
+				},
+			},
+			expectedEntityRefs: nil,
+			description:        "filter on namespace and name, no hits",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			ordering: Ordering{
+				OrderBy: OrderByName,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+				component2.EntityRef(),
+			},
+			description: "multiple hits, ascending name order",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			ordering: Ordering{
+				OrderBy:    OrderByName,
+				Descending: true,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component2.EntityRef(),
+				component1.EntityRef(),
+			},
+			description: "multiple hits, descending name order",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+			},
+			ordering: Ordering{
+				OrderBy: OrderByNamespace,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+				component2.EntityRef(),
+			},
+			description: "multiple hits, ascending namespace order",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+				component3,
+			},
+			pagination: Pagination{
+				Limit: 2,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component1.EntityRef(),
+				component2.EntityRef(),
+			},
+			description: "multiple hits, first page",
+		},
+		{
+			components: []model.Component{
+				component1,
+				component2,
+				component3,
+			},
+			pagination: Pagination{
+				Limit:  2,
+				Offset: 2,
+			},
+			expectedEntityRefs: []model.EntityRef{
+				component3.EntityRef(),
+			},
+			description: "multiple hits, second page",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			store := testStore(t)
+			for _, c := range tc.components {
+				_, err := store.CreateComponent(c)
+				assert.NoError(t, err)
+			}
+
+			refs, pagination, err := store.ListComponents(tc.filters, tc.ordering, tc.pagination)
+			assert.NoError(t, err)
+			if tc.ordering.OrderBy != "" {
+				assert.Equal(t, tc.expectedEntityRefs, refs)
+			} else {
+				assert.ElementsMatch(t, tc.expectedEntityRefs, refs)
+			}
+			if tc.pagination.Limit > 0 {
+				assert.Equal(t, tc.pagination.Limit, pagination.Limit)
+				assert.Equal(t, tc.pagination.Offset+len(refs), pagination.Offset)
+			}
+		})
+	}
+}
+
 // ---
 
 func TestCreateAPIAndReadAPI(t *testing.T) {
